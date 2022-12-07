@@ -27,7 +27,6 @@ int timer() {
   // lay thoi gian dau theo ms
   unsigned long int starttime = millis();
   printlcd(0, 0, "Bat dau do!", true);
-  Serial.print("Timer started! ");
   // cho diem ket thuc duoc kich hoat
   while (true) {
     stopbtn.loop();
@@ -35,21 +34,19 @@ int timer() {
   }
   // ket thuc
   printlcd(0, 0, "Ket thuc do!", true);
-  Serial.println("Timer ended!");
   // lay thoi gian ket thuc theo ms
   unsigned long int stoptime = millis();
   // tinh chenh lech thoi gian
   unsigned long int difftime = stoptime - starttime;
   // in thong tin ra serial + lcd
   String start = "t1 = " + String(starttime) + "(ms)"; printlcd(1, 0, start, false);
-  Serial.print("Start time: "); Serial.print(starttime); Serial.print("(ms) ");
+  Serial.print(starttime); Serial.print(";");
   String stop = "t2 = " + String(stoptime) + "(ms)"; printlcd(2, 0, stop, false);
-  Serial.print("Stop time: "); Serial.print(stoptime); Serial.print("(ms) ");
+  Serial.print(stoptime); Serial.print(";");
   String diff = "t = " + String(difftime) + "(ms)"; 
   lcd.createChar(0, customChar); lcd.setCursor(0, 3); lcd.write(0);
   printlcd(3, 1, diff, false);
-  Serial.print("Time difference: "); Serial.print(difftime);Serial.println("(ms)");
-  Serial.println("Bam nut bat ki de ket thuc phien do!");
+  Serial.print(difftime);Serial.println(";");
   // delay xem kq
   while (true) {
     b1btn.loop();

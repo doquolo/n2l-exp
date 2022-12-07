@@ -11,22 +11,7 @@ wb = Workbook()
 ws = wb.active
 
 rows = [
-    ["Lần thử" , "△t"],
-    [1, 100],
-    [2, 200],
-    [3, 300],
-    [1, 100],
-    [2, 200],
-    [3, 300],
-    [1, 100],
-    [2, 200],
-    [3, 300],
-    [1, 100],
-    [2, 200],
-    [3, 300],
-    [1, 100],
-    [2, 200],
-    [3, 300],
+    ["Lần thử" , "△t"]
 ]
 
 for row in rows:
@@ -52,4 +37,4 @@ for rows in ws.iter_rows(min_row=2, min_col=1, max_col=2, max_row=len(rows)):
     for cell in rows:
         cell.fill = PatternFill(start_color='35de8c', end_color='35de8c', fill_type='solid')
 
-wb.save("soft//line.xlsx")
+wb.save("dothi.xlsx")
