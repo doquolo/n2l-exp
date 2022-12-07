@@ -10,11 +10,12 @@ LiquidCrystal_I2C lcd(0x27,20,4);
 byte customChar[] = {B00000,B00000,B00100,B01110,B11111,B11111,B11111,B00000};
 
 // khai bao chan cua sensor
-const int start = 18; const int stop = 19;
-int startstate; int stopstate;
+const int start = 18; const int stop = 19; const int b1 = 23;
+int startstate; int stopstate; int b1state;
 // tao instance cho sensor
-ezButton startbtn(18);
-ezButton stopbtn(19);
+ezButton startbtn(start);
+ezButton stopbtn(stop);
+ezButton b1btn(b1);
 
 void printlcd(int row, int col, String string, bool clear = false) {
     if (clear) lcd.clear();
@@ -24,8 +25,8 @@ void printlcd(int row, int col, String string, bool clear = false) {
 
 int timer() {
   // lay thoi gian dau theo ms
-  long int starttime = millis();
-  printlcd(0, 0, "Bat dau dem!", true);
+  unsigned long int starttime = millis();
+  printlcd(0, 0, "Bat dau do!", true);
   Serial.print("Timer started! ");
   // cho diem ket thuc duoc kich hoat
   while (true) {
@@ -33,12 +34,12 @@ int timer() {
     if (stopbtn.isPressed()) break;
   }
   // ket thuc
-  printlcd(0, 0, "Ket thuc dem!", true);
+  printlcd(0, 0, "Ket thuc do!", true);
   Serial.println("Timer ended!");
   // lay thoi gian ket thuc theo ms
-  long int stoptime = millis();
+  unsigned long int stoptime = millis();
   // tinh chenh lech thoi gian
-  long int difftime = stoptime - starttime;
+  unsigned long int difftime = stoptime - starttime;
   // in thong tin ra serial + lcd
   String start = "t1 = " + String(starttime) + "(ms)"; printlcd(1, 0, start, false);
   Serial.print("Start time: "); Serial.print(starttime); Serial.print("(ms) ");
@@ -48,7 +49,12 @@ int timer() {
   lcd.createChar(0, customChar); lcd.setCursor(0, 3); lcd.write(0);
   printlcd(3, 1, diff, false);
   Serial.print("Time difference: "); Serial.print(difftime);Serial.println("(ms)");
-  delay(5000);
+  Serial.println("Bam nut bat ki de ket thuc phien do!");
+  // delay xem kq
+  while (true) {
+    b1btn.loop();
+    if (b1btn.isPressed()) break;
+  }
   printlcd(0, 0, "Cho tin hieu diem 1!", true);
   return 1;
 }
@@ -56,7 +62,7 @@ int timer() {
 void setup() {
   // put your setup code here, to run once:
   // setup giao thuc serial
-  Serial.begin(115200);
+  Serial.begin(9600);
   // init man hinh + bat den nen
   lcd.init();
   lcd.backlight();
