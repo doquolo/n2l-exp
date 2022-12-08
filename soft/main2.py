@@ -3,38 +3,48 @@ from openpyxl.styles import colors
 from openpyxl.cell import Cell
 from openpyxl import Workbook
 from openpyxl.chart import (
-    LineChart,
+    ScatterChart,
     Reference,
+    Series,
 )
 
 wb = Workbook()
 ws = wb.active
 
 rows = [
-    ["Lần thử" , "△t"]
+    ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc", "Lực kéo (tt)"],
+    [2, 1, 0.4, 0.64, 0.5],
+    [3, 1, 0.5, 0.71, 0.5],
+    [1, 1, 0.3, 0.55, 0.5],
+    [4, 2, 0.5, 0.5, 0.5],
 ]
 
-for row in rows:
-    ws.append(row)
+ws.append(rows[0])
+for i in range(1, len(rows)):
+    rows[i].append(f"=Round((2*E{i+1})/(D{i+1}*D{i+1}), 2)")
+    rows[i].append(f"=Round(F{i+1}*C{i+1}, 2)")
+    ws.append(rows[i])
 
-c1 = LineChart()
-c1.title = "Đồ thị"
-c1.style = 13
-c1.y_axis.title = '△t (ms)'
-c1.x_axis.title = 'Lần thử'
+for cell in ws["1:1"]:
+    cell.fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
+    cell.font = Font(bold=True)
 
-data = Reference(ws, min_col=2, min_row=1, max_col=2, max_row=len(rows))
-c1.add_data(data, titles_from_data=True)
-
-ws.add_chart(c1, "D1")
-
-ws['A1'].fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
-ws['A1'].font = Font(bold=True)
-ws['B1'].fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
-ws['B1'].font = Font(bold=True)
-
-for rows in ws.iter_rows(min_row=2, min_col=1, max_col=2, max_row=len(rows)):
+for rows in ws.iter_rows(min_row=2, min_col=1, max_col=7, max_row=len(rows)):
     for cell in rows:
         cell.fill = PatternFill(start_color='35de8c', end_color='35de8c', fill_type='solid')
 
-wb.save("dothi.xlsx")
+chart = ScatterChart()
+chart.title = "Đồ thị F-a"
+chart.style = 13
+chart.x_axis.title = "Lực kéo F (N)"
+chart.y_axis.title = "Gia tốc a (m/s)"
+chart.legend = None
+
+xvalues = Reference(ws, min_col=6, min_row=2, max_row=len(rows)-2)
+yvalues = Reference(ws, min_col=7, min_row=2, max_row=len(rows)-2)
+series = Series(xvalues, yvalues, title="")
+chart.series.append(series)
+
+ws.add_chart(chart, "I1")
+
+wb.save("test//dothi.xlsx")
