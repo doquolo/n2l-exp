@@ -46,8 +46,8 @@ def xuatfiledothi(data):
     chart.y_axis.title = "Gia tốc a (m/s)"
     chart.legend = None
 
-    xvalues = Reference(ws, min_col=6, min_row=2, max_row=len(rows)-2)
-    yvalues = Reference(ws, min_col=7, min_row=2, max_row=len(rows)-2)
+    xvalues = Reference(ws, min_col=6, min_row=2, max_row=len(rows)-1)
+    yvalues = Reference(ws, min_col=7, min_row=2, max_row=len(rows)-1)
     series = Series(xvalues, yvalues, title="")
     chart.series.append(series)
 
