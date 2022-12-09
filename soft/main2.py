@@ -13,17 +13,13 @@ ws = wb.active
 
 rows = [
     ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc", "Lực kéo (tt)"],
-    [2, 1, 0.4, 0.64, 0.5],
-    [3, 1, 0.5, 0.71, 0.5],
-    [1, 1, 0.3, 0.55, 0.5],
-    [4, 2, 0.5, 0.5, 0.5],
 ]
 
-ws.append(rows[0])
-for i in range(1, len(rows)):
-    rows[i].append(f"=Round((2*E{i+1})/(D{i+1}*D{i+1}), 2)")
-    rows[i].append(f"=Round(F{i+1}*C{i+1}, 2)")
-    ws.append(rows[i])
+for d in data: 
+    rows.append(d)
+
+for row in rows:
+    ws.append(row)
 
 for cell in ws["1:1"]:
     cell.fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
