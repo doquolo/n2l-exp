@@ -14,10 +14,13 @@ from openpyxl.chart import (
     Reference,
     Series,
 )
+# thu vien he thong 
+import os
+import datetime
 
 sg.theme("DarkAmber")
 
-def xuatfiledothi(data):
+def xuatfiledothi(data, dir):
     wb = Workbook()
     ws = wb.active
 
@@ -30,6 +33,8 @@ def xuatfiledothi(data):
 
     for row in rows:
         ws.append(row)
+
+    rowcount = len(rows)
 
     for cell in ws["1:1"]:
         cell.fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
@@ -46,14 +51,14 @@ def xuatfiledothi(data):
     chart.y_axis.title = "Gia tốc a (m/s)"
     chart.legend = None
 
-    xvalues = Reference(ws, min_col=6, min_row=2, max_row=len(rows)-1)
-    yvalues = Reference(ws, min_col=7, min_row=2, max_row=len(rows)-1)
+    xvalues = Reference(ws, min_col=6, min_row=2, max_row=rowcount)
+    yvalues = Reference(ws, min_col=7, min_row=2, max_row=rowcount)
     series = Series(xvalues, yvalues, title="")
     chart.series.append(series)
 
     ws.add_chart(chart, "I1")
 
-    wb.save("soft//test//dothi.xlsx")
+    wb.save(dir)
 
 def portselector():
     # hien thi tat ca cong serial dang mo tren may tinh
@@ -88,12 +93,12 @@ def datain(ser, testcount, data):
         print(testcount, ". ", sout_decoded[2], "(ms)")
         testcount += 1
         layout = [
-            [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:")],
-            [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)")],
-            [sg.Text("Lực kéo (Lý thuyết): "), sg.InputText()],
-            [sg.Text("Khối lượng: "), sg.InputText()],
-            [sg.Text("Quãng đường: "), sg.InputText()],
-            [sg.Submit()]
+            [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:", font=("Arial", 15))],
+            [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)", font=("Arial", 15))],
+            [sg.Text("Lực kéo (Lý thuyết): ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
+            [sg.Text("Khối lượng: ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
+            [sg.Text("Quãng đường: ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
+            [sg.Submit(button_text="Hoàn tất", font=("Arial", 15))]
         ]
         win = sg.Window("Nhập dữ liệu đo", layout, finalize=True)
         e, v = win.read()
@@ -134,7 +139,22 @@ if __name__ == "__main__":
         if e == sg.WIN_CLOSED:
             break
         if e == "-dt-":
-            xuatfiledothi(data)
-            sg.Popup("Đã xuất dothi.xlsx tại folder chứa script!")
+            dir = str(os.getcwd())
+            name = datetime.datetime.now()
+            name = name.strftime("%d%m%y_%H%M%S") + ".xlsx"
+            layout = [[sg.Text("Chọn thư mục: "), sg.Input(key="-IN2-" ,change_submits=True, default_text=dir), sg.FolderBrowse(key="-IN-")],[sg.Button("Chọn", key="Submit")]]
+            win = sg.Window("Xuất đồ thị", layout, finalize=True)
+            while True:
+                event, values = win.read()
+                dir = values["-IN2-"]
+                if event == sg.WIN_CLOSED or event=="Exit":
+                    break
+                elif event == "Submit":
+                    dir = values["-IN2-"]
+                    break
+            win.close()
+            dir = dir + f"/{name}"
+            xuatfiledothi(data, dir)
+            sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}!")
 
     win.close()
