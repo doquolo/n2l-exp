@@ -71,7 +71,10 @@ int ab_timer() {
   // delay xem kq
   while (true) {
     b1btn.loop();
-    if (b1btn.isPressed()) break;
+    if (b1btn.isPressed()) {
+      delay(250);
+      break;
+    }
   }
   initHome(true);
   return 1;
@@ -105,7 +108,10 @@ int t_timer() {
   // delay xem kq
   while (true) {
     b1btn.loop();
-    if (b1btn.isPressed()) break;
+    if (b1btn.isPressed()) {
+      delay(250);
+      break;
+    }
   }
   initHome(true);
   return 1;
@@ -129,6 +135,7 @@ void loop() {
   b1btn.loop();
   if (b1btn.isPressed()) {
     mode = !(mode);
+    delay(250);
     // in ra man hinh che do hien tai
     initHome();
   }
