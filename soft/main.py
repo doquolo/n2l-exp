@@ -18,7 +18,7 @@ from openpyxl.chart import (
 import os
 import datetime
 
-sg.theme("DarkAmber")
+sg.theme("Dark")
 
 def xuatfiledothi(data, dir):
     wb = Workbook()
