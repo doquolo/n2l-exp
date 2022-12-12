@@ -66,8 +66,8 @@ int ab_timer() {
   String diff = "t = " + String(difftime) + "(ms)"; 
   lcd.createChar(0, customChar); lcd.setCursor(0, 1); lcd.write(0);
   printlcd(1, 1, diff, false);
-  Serial.print(difftime);Serial.println(";");
-  Serial.print("ab;");
+  Serial.print(difftime);Serial.print(";");
+  Serial.println("ab;");
   // delay xem kq
   while (true) {
     b1btn.loop();
@@ -100,8 +100,8 @@ int t_timer() {
   String diff = "t = " + String(difftime) + "(ms)"; 
   lcd.createChar(0, customChar); lcd.setCursor(0, 1); lcd.write(0);
   printlcd(1, 1, diff, false);
-  Serial.print(difftime);Serial.println(";");
-  Serial.print("t;");
+  Serial.print(difftime);Serial.print(";");
+  Serial.println("t;");
   // delay xem kq
   while (true) {
     b1btn.loop();
