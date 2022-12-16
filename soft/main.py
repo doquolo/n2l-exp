@@ -18,8 +18,6 @@ from openpyxl.chart import (
 import os
 import datetime
 
-sg.theme("Dark")
-
 def xuatfiledothi(data, dir):
     wb = Workbook()
     ws = wb.active
@@ -75,15 +73,20 @@ def portselector():
 
     # print(portlist)
 
-    layout = [[sg.Text("Chọn cổng COM đến ESP32: ")],[sg.Text(portlist)], [sg.InputText()], [sg.Submit()]]
-    win = sg.Window("Chọn COM", layout, finalize=True)
+    layout = [
+        [sg.Text("Chọn cổng COM đến ESP32: ", background_color='#242526', text_color='#e7e9ed')],
+        [sg.Text(portlist.strip(), background_color='#242526', text_color='#e7e9ed')], 
+        [sg.InputText(background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)], 
+        [sg.Submit(button_text="Kết nối", button_color=('#3a3b3c', '#e7e9ed'))]
+    ]
+    win = sg.Window("Chọn cổng COM", layout, finalize=True, background_color='#242526', font=("Arial", 10))
     e, v = win.read()
     win.close()
 
     # chon cong com den esp32
     # i = int(input("Chọn cổng COM để kết nối đến ESP32: "))
     ser = serial.Serial(str(ports[int(v[0])-1].name), 9600, timeout=0.050)
-    return ser
+    return ser, str(ports[int(v[0])-1].description)
 
 def datain(ser, testcount, data):
     sout = ser.readline()
@@ -93,14 +96,14 @@ def datain(ser, testcount, data):
         print(testcount, ". ", sout_decoded[2], "(ms)")
         testcount += 1
         layout = [
-            [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:", font=("Arial", 15))],
-            [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)", font=("Arial", 15))],
-            [sg.Text("Lực kéo (Lý thuyết): ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
-            [sg.Text("Khối lượng: ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
-            [sg.Text("Quãng đường: ", font=("Arial", 15)), sg.InputText(font=("Arial", 15))],
-            [sg.Submit(button_text="Hoàn tất", font=("Arial", 15))]
+            [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#242526', text_color='#e7e9ed')],
+            [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#242526', text_color='#e7e9ed')],
+            [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+            [sg.Text("Khối lượng:             ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+            [sg.Text("Quãng đường:         ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+            [sg.Submit(button_text="Hoàn tất",  button_color=('#3a3b3c', '#e7e9ed'))]
         ]
-        win = sg.Window("Nhập dữ liệu đo", layout, finalize=True)
+        win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 15))
         e, v = win.read()
         win.close()
         time = float(sout_decoded[2]) / 1000 #ms to s
@@ -114,20 +117,47 @@ def datain(ser, testcount, data):
 
 if __name__ == "__main__":
     # init serial port
-    ser = portselector()
-    print(ser.name)
+    ser, ser_desc = portselector()
+    print(ser.name, ser_desc)
     # bien dem so lan thu
     testcount = 0
 
     # du lieu cua bang trong gui
     data = []
-    headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc", "Lực kéo"]
+    headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc", "Lực kéo (tt)"]
 
     # tao cua so chuong trinh
+    menu = [
+        ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
+        ['&Trợ giúp', ['&Thông tin']]
+    ]
     layout = [
-        [sg.Table(values=data, headings=headings, key="-t-", auto_size_columns=False,  def_col_width=10, num_rows=10, justification="center", expand_x=True, expand_y=True, font=("Arial", 15, "bold"))], 
-        [sg.Button("Xuất đồ thị .xlsx", key="-dt-", font=("Arial", 15))],]
-    win = sg.Window("Test", layout, resizable=True, finalize=True)
+        [sg.Menu(menu, tearoff=False)],
+        [sg.Table(
+            values=data, 
+            headings=headings, 
+            key="-t-", 
+            auto_size_columns=False,  
+            def_col_width=10, 
+            num_rows=10, 
+            justification="center", 
+            expand_x=True, 
+            expand_y=True, 
+            font=("Arial", 15, "bold"), 
+            # header_background_color=(), header_text_color=(),
+            header_relief=sg.RELIEF_SOLID,
+            background_color='#242526', 
+            text_color='#e7e9ed',
+            sbar_trough_color='#3a3b3c', 
+            sbar_background_color='#242526', 
+            sbar_arrow_color='#3a3b3c', 
+            sbar_frame_color='#242526', 
+            sbar_relief=sg.RELIEF_FLAT
+        )], 
+        # [sg.Button("Xuất đồ thị .xlsx", key="-dt-",  button_color=('#3a3b3c', '#e7e9ed'))],
+        [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#242526', text_color='#e7e9ed', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
+    ]
+    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#242526', size=(1200, 400))
 
     # event loop
     while True:
@@ -136,25 +166,33 @@ if __name__ == "__main__":
             print(data)
             win["-t-"].update(values=data)
         e, v = win.read(timeout=500)
-        if e == sg.WIN_CLOSED:
+        if e == sg.WIN_CLOSED or e == "Thoát":
             break
-        if e == "-dt-":
+        if e == "Xuất đồ thị...":
             dir = str(os.getcwd())
             name = datetime.datetime.now()
             name = name.strftime("%d%m%y_%H%M%S") + ".xlsx"
-            layout = [[sg.Text("Chọn thư mục: "), sg.Input(key="-IN2-" ,change_submits=True, default_text=dir), sg.FolderBrowse(key="-IN-")],[sg.Button("Chọn", key="Submit")]]
-            win = sg.Window("Xuất đồ thị", layout, finalize=True)
+            layout = [
+                [
+                    sg.Text("Chọn thư mục: ", background_color='#242526', text_color='#e7e9ed'), 
+                    sg.Input(key="-IN2-" ,change_submits=True, default_text=dir, background_color='#3a3b3c', text_color='#e7e9ed', border_width=0), 
+                    sg.FolderBrowse(key="-IN-", button_color=('#3a3b3c', '#e7e9ed'))
+                ],
+                [
+                    sg.Button("Chọn", key="Submit", button_color=('#3a3b3c', '#e7e9ed'))
+                ]
+            ]
+            exp_win = sg.Window("Xuất đồ thị", layout, finalize=True, background_color='#242526')
             while True:
-                event, values = win.read()
-                dir = values["-IN2-"]
+                event, values = exp_win.read()
                 if event == sg.WIN_CLOSED or event=="Exit":
                     break
                 elif event == "Submit":
                     dir = values["-IN2-"]
+                    dir = dir + f"/{name}"
+                    xuatfiledothi(data, dir)
+                    sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}!", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
                     break
-            win.close()
-            dir = dir + f"/{name}"
-            xuatfiledothi(data, dir)
-            sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}!")
+            exp_win.close()
 
     win.close()
