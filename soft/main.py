@@ -95,17 +95,20 @@ def datain(ser, testcount, data):
     try:
         print(testcount, ". ", sout_decoded[2], "(ms)")
         testcount += 1
-        layout = [
-            [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#242526', text_color='#e7e9ed')],
-            [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#242526', text_color='#e7e9ed')],
-            [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-            [sg.Text("Khối lượng:             ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-            [sg.Text("Quãng đường:         ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-            [sg.Submit(button_text="Hoàn tất",  button_color=('#3a3b3c', '#e7e9ed'))]
-        ]
-        win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 15))
-        e, v = win.read()
-        win.close()
+        while True:
+            layout = [
+                [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#242526', text_color='#e7e9ed')],
+                [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#242526', text_color='#e7e9ed')],
+                [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+                [sg.Text("Khối lượng:             ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+                [sg.Text("Quãng đường:         ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
+                [sg.Submit(button_text="Hoàn tất",  button_color=('#3a3b3c', '#e7e9ed'))]
+            ]
+            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 15))
+            e, v = win.read()
+            win.close()
+            if (v[0] != "" and v[1] != "" and v[2] != ""): break
+            else: sg.Popup("Các ô dữ liệu không được để trống!", title="Chú ý", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
         time = float(sout_decoded[2]) / 1000 #ms to s
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration, round((acceleration*float(v[1])),2)])
@@ -113,6 +116,8 @@ def datain(ser, testcount, data):
         return data, testcount
     except Exception as e:
         print("oops ", e)
+        sg.Popup(e, title="Lỗi", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+        testcount -= 1
         return data, testcount
 
 if __name__ == "__main__":
@@ -191,7 +196,7 @@ if __name__ == "__main__":
                     dir = values["-IN2-"]
                     dir = dir + f"/{name}"
                     xuatfiledothi(data, dir)
-                    sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}!", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+                    sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}.", title="Hoàn tất", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
                     break
             exp_win.close()
 
