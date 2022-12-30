@@ -17,13 +17,37 @@ from openpyxl.chart import (
 # thu vien he thong 
 import os
 import datetime
+# thu vien ve do thi
+import numpy as np
+import matplotlib.pyplot as plt
+# This is to include a matplotlib figure in a Tkinter canvas
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+# Embedding the Matplotlib toolbar into your application
+def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
+    if canvas.children:
+        for child in canvas.winfo_children():
+            child.destroy()
+    if canvas_toolbar.children:
+        for child in canvas_toolbar.winfo_children():
+            child.destroy()
+    figure_canvas_agg = FigureCanvasTkAgg(fig, master=canvas)
+    figure_canvas_agg.draw()
+    toolbar = Toolbar(figure_canvas_agg, canvas_toolbar)
+    toolbar.update()
+    figure_canvas_agg.get_tk_widget().pack(side='right', fill='both', expand=1)
+
+
+class Toolbar(NavigationToolbar2Tk):
+    def __init__(self, *args, **kwargs):
+        super(Toolbar, self).__init__(*args, **kwargs)
 
 def xuatfiledothi(data, dir):
     wb = Workbook()
     ws = wb.active
 
     rows = [
-        ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc", "Lực kéo (tt)"],
+        ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
     ]
 
     for d in data: 
@@ -38,7 +62,7 @@ def xuatfiledothi(data, dir):
         cell.fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
         cell.font = Font(bold=True)
 
-    for rows in ws.iter_rows(min_row=2, min_col=1, max_col=7, max_row=len(rows)):
+    for rows in ws.iter_rows(min_row=2, min_col=1, max_col=6, max_row=len(rows)):
         for cell in rows:
             cell.fill = PatternFill(start_color='35de8c', end_color='35de8c', fill_type='solid')
 
@@ -50,7 +74,7 @@ def xuatfiledothi(data, dir):
     chart.legend = None
 
     xvalues = Reference(ws, min_col=6, min_row=2, max_row=rowcount)
-    yvalues = Reference(ws, min_col=7, min_row=2, max_row=rowcount)
+    yvalues = Reference(ws, min_col=2, min_row=2, max_row=rowcount)
     series = Series(xvalues, yvalues, title="")
     chart.series.append(series)
 
@@ -111,13 +135,13 @@ def datain(ser, testcount, data):
             else: sg.Popup("Các ô dữ liệu không được để trống!", title="Chú ý", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
         time = float(sout_decoded[2]) / 1000 #ms to s
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
-        data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration, round((acceleration*float(v[1])),2)])
+        data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
         print(data)
         return data, testcount
     except Exception as e:
         print("oops ", e)
         sg.Popup(e, title="Lỗi", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
-        testcount -= 1
+        testcount =  (testcount - 1) if testcount >= 2 else testcount
         return data, testcount
 
 if __name__ == "__main__":
@@ -129,7 +153,7 @@ if __name__ == "__main__":
 
     # du lieu cua bang trong gui
     data = []
-    headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc", "Lực kéo (tt)"]
+    headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc"]
 
     # tao cua so chuong trinh
     menu = [
@@ -166,10 +190,14 @@ if __name__ == "__main__":
 
     # event loop
     while True:
-        if (ser.in_waiting != 0):
-            data, testcount = datain(ser, testcount, data)
-            print(data)
-            win["-t-"].update(values=data)
+        try:
+            if (ser.in_waiting != 0):
+                data, testcount = datain(ser, testcount, data)
+                print(data)
+                win["-t-"].update(values=data)
+        except serial.serialutil.SerialException:
+            sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+            break
         e, v = win.read(timeout=500)
         if e == sg.WIN_CLOSED or e == "Thoát":
             break

@@ -52,6 +52,9 @@ layout = [
 
 ]
 
+x = [1, 2, 3, 4]
+y = [1, 2, 3, 4]
+
 window = sg.Window('Graph with controls', layout)
 
 while True:
@@ -66,10 +69,8 @@ while True:
         DPI = fig.get_dpi()
         # ------------------------------- you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
         fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
-        # -------------------------------
-        x = np.linspace(0, 2 * np.pi)
-        y = np.sin(x)
-        plt.plot(x, y)
+        # ------------------------------
+        hl, = plt.plot(x, y)
         plt.title('y=sin(x)')
         plt.xlabel('X')
         plt.ylabel('Y')
@@ -77,5 +78,10 @@ while True:
 
         # ------------------------------- Instead of plt.show()
         draw_figure_w_toolbar(window['fig_cv'].TKCanvas, fig, window['controls_cv'].TKCanvas)
+        x.append(10)
+        y.append(10)
+        hl.set_ydata(y)
+        hl.set_xdata(x)
+        plt.draw()
 
 window.close()
