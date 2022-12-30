@@ -42,6 +42,7 @@ class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
         super(Toolbar, self).__init__(*args, **kwargs)
 
+# xuat do thi excel
 def xuatfiledothi(data, dir):
     wb = Workbook()
     ws = wb.active
@@ -82,6 +83,7 @@ def xuatfiledothi(data, dir):
 
     wb.save(dir)
 
+# trinh chon cong com
 def portselector():
     # hien thi tat ca cong serial dang mo tren may tinh
     ports = serial.tools.list_ports.comports()
@@ -112,7 +114,8 @@ def portselector():
     ser = serial.Serial(str(ports[int(v[0])-1].name), 9600, timeout=0.050)
     return ser, str(ports[int(v[0])-1].description)
 
-def datain(ser, testcount, data):
+# ham su li du lieu vao tu thiet bi do
+def datain(ser, testcount, data, x, y):
     sout = ser.readline()
     sout_decoded = str(sout).split(";")
     print(sout_decoded)
@@ -128,7 +131,7 @@ def datain(ser, testcount, data):
                 [sg.Text("Quãng đường:         ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
                 [sg.Submit(button_text="Hoàn tất",  button_color=('#3a3b3c', '#e7e9ed'))]
             ]
-            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 15))
+            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 14))
             e, v = win.read()
             win.close()
             if (v[0] != "" and v[1] != "" and v[2] != ""): break
@@ -137,6 +140,14 @@ def datain(ser, testcount, data):
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
         print(data)
+        # cap nhat du lieu tren do thi
+        x.append(float(v[0]))
+        y.append(acceleration)
+        hl.set_ydata(y)
+        hl.set_xdata(x)
+        plt.xticks(np.arange(min(x), max(x)+1, 1.0))
+        plt.yticks(np.arange(min(y), max(y)+1, 1.0))
+        plt.draw()
         return data, testcount
     except Exception as e:
         print("oops ", e)
@@ -155,6 +166,10 @@ if __name__ == "__main__":
     data = []
     headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc"]
 
+    # du lieu de ve do thi (x: luc keo - y: gia toc)
+    x = []
+    y = []
+
     # tao cua so chuong trinh
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
@@ -162,37 +177,71 @@ if __name__ == "__main__":
     ]
     layout = [
         [sg.Menu(menu, tearoff=False)],
-        [sg.Table(
-            values=data, 
-            headings=headings, 
-            key="-t-", 
-            auto_size_columns=False,  
-            def_col_width=10, 
-            num_rows=10, 
-            justification="center", 
-            expand_x=True, 
-            expand_y=True, 
-            font=("Arial", 15, "bold"), 
-            # header_background_color=(), header_text_color=(),
-            header_relief=sg.RELIEF_SOLID,
-            background_color='#242526', 
-            text_color='#e7e9ed',
-            sbar_trough_color='#3a3b3c', 
-            sbar_background_color='#242526', 
-            sbar_arrow_color='#3a3b3c', 
-            sbar_frame_color='#242526', 
-            sbar_relief=sg.RELIEF_FLAT
-        )], 
-        # [sg.Button("Xuất đồ thị .xlsx", key="-dt-",  button_color=('#3a3b3c', '#e7e9ed'))],
+        [
+            sg.Column([
+                [sg.Canvas(key='controls_cv', background_color='#242526')],
+                [sg.Column(
+                    layout=[
+                        [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True)]
+                        ],
+                    background_color='#DAE0E6', pad=(0, 0), expand_x=True, expand_y=True),
+                ],
+            ], expand_x=True, expand_y=True, background_color='#242526'),
+            sg.VSeparator(),
+            sg.Column([[sg.Table(
+                values=data, 
+                headings=headings, 
+                key="-t-", 
+                auto_size_columns=False,  
+                def_col_width=10, 
+                num_rows=10, 
+                justification="center", 
+                expand_x=True, 
+                expand_y=True, 
+                font=("Arial", 14, "bold"), 
+                # header_background_color=(), header_text_color=(),
+                header_relief=sg.RELIEF_SOLID,
+                background_color='#242526', 
+                text_color='#e7e9ed',
+                sbar_trough_color='#3a3b3c', 
+                sbar_background_color='#242526', 
+                sbar_arrow_color='#3a3b3c', 
+                sbar_frame_color='#242526', 
+                sbar_relief=sg.RELIEF_FLAT
+            )]], expand_x=True, expand_y=True, background_color='#242526'),  
+        ],
         [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#242526', text_color='#e7e9ed', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
     ]
-    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#242526', size=(1200, 400))
+    # tao cua so chuong trinh chinh
+    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#242526', size=(1400, 600))
+
+    # tao do thi
+    plt.figure(1)
+    fig = plt.gcf()
+    DPI = fig.get_dpi()
+
+    ax = plt.gca()
+    ax.set_xlim(xmin = 0)
+    ax.set_ylim(ymin = 0)
+
+    # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
+    # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
+
+    hl, = plt.plot(x, y)
+    plt.title('Đồ thị F-a')
+    plt.xlabel('Lực kéo F (N)')
+    plt.ylabel('Gia tốc a (m/s)')
+    plt.grid()
+    plt.xticks(np.arange(min([x for x in range(5)]), max([x for x in range(5)])+1, 1.0))
+    plt.yticks(np.arange(min([y for y in range(5)]), max([y for y in range(5)])+1, 1.0))
+    draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
+    plt.draw()
 
     # event loop
     while True:
         try:
             if (ser.in_waiting != 0):
-                data, testcount = datain(ser, testcount, data)
+                data, testcount = datain(ser, testcount, data, x, y)
                 print(data)
                 win["-t-"].update(values=data)
         except serial.serialutil.SerialException:
