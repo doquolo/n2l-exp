@@ -14,9 +14,12 @@ from openpyxl.chart import (
     Reference,
     Series,
 )
+# thu vien hinh anh
+from PIL import Image, ImageTk
 # thu vien he thong 
 import os
 import datetime
+import base64
 # thu vien ve do thi
 import numpy as np
 import matplotlib.pyplot as plt
@@ -100,12 +103,12 @@ def portselector():
     # print(portlist)
 
     layout = [
-        [sg.Text("Chọn cổng COM đến ESP32: ", background_color='#242526', text_color='#e7e9ed')],
-        [sg.Text(portlist.strip(), background_color='#242526', text_color='#e7e9ed')], 
-        [sg.InputText(background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)], 
-        [sg.Submit(button_text="Kết nối", button_color=('#3a3b3c', '#e7e9ed'))]
+        [sg.Text("Chọn cổng COM đến ESP32: ", background_color='#eeeeee', text_color='#000')],
+        [sg.Text(portlist.strip(), background_color='#eeeeee', text_color='#000')], 
+        [sg.InputText(background_color='#fff', text_color='#000', border_width=0)], 
+        [sg.Submit(button_text="Kết nối", button_color=('#fff', '#000'))]
     ]
-    win = sg.Window("Chọn cổng COM", layout, finalize=True, background_color='#242526', font=("Arial", 10))
+    win = sg.Window("Chọn cổng COM", layout, finalize=True, background_color='#eeeeee', font=("Arial", 10))
     e, v = win.read()
     win.close()
 
@@ -124,18 +127,18 @@ def datain(ser, testcount, data, x, y):
         testcount += 1
         while True:
             layout = [
-                [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#242526', text_color='#e7e9ed')],
-                [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#242526', text_color='#e7e9ed')],
-                [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-                [sg.Text("Khối lượng:             ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-                [sg.Text("Quãng đường:         ",  background_color='#242526', text_color='#e7e9ed'), sg.InputText( background_color='#3a3b3c', text_color='#e7e9ed', border_width=0)],
-                [sg.Submit(button_text="Hoàn tất",  button_color=('#3a3b3c', '#e7e9ed'))]
+                [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#eeeeee', text_color='#000')],
+                [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#eeeeee', text_color='#000')],
+                [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
+                [sg.Text("Khối lượng:             ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
+                [sg.Text("Quãng đường:         ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
+                [sg.Submit(button_text="Hoàn tất",  button_color=('#fff', '#000'))]
             ]
-            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#242526', font=('Arial', 14))
+            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#eeeeee', font=('Arial', 14))
             e, v = win.read()
             win.close()
             if (v[0] != "" and v[1] != "" and v[2] != ""): break
-            else: sg.Popup("Các ô dữ liệu không được để trống!", title="Chú ý", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+            else: sg.Popup("Các ô dữ liệu không được để trống!", title="Chú ý", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
         time = float(sout_decoded[2]) / 1000 #ms to s
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
@@ -151,7 +154,7 @@ def datain(ser, testcount, data, x, y):
         return data, testcount
     except Exception as e:
         print("oops ", e)
-        sg.Popup(e, title="Lỗi", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+        sg.Popup(e, title="Lỗi", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
         testcount =  (testcount - 1) if testcount >= 2 else testcount
         return data, testcount
 
@@ -178,21 +181,32 @@ if __name__ == "__main__":
     layout = [
         [sg.Menu(menu, tearoff=False)],
         [
-            sg.Column([
-                [sg.Canvas(key='controls_cv', background_color='#242526')],
-                [sg.Column(
-                    layout=[
-                        [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True)]
-                        ],
-                    background_color='#DAE0E6', pad=(0, 0), expand_x=True, expand_y=True),
-                ],
-            ], expand_x=True, expand_y=True, background_color='#242526'),
-            sg.VSeparator(),
-            sg.Column([[sg.Table(
+            # noi dung thi nghiem
+            sg.Frame("Mô tả thí nghiệm", [
+                [sg.Multiline(
+                    default_text=
+                    '''Tiến hành:
+Bước 1: Lực kéo F có độ lớn tăng dần 1 N, 2 N và 3 N (bằng cách móc thêm các quả nặng vào đầu dây vắt qua ròng rọc). 
+Bước 2: Ghi vào Bảng 15.1 độ lớn lực kéo F và tổng khối lượng của hệ (gồm xe trượt và các quả nặng đặt vào xe), ứng với mỗi lần thí nghiệm.
+Bước 3: Do thời gian chuyển động của xe; đồng hồ bắt đầu đếm từ lúc tám chân sáng đi qua cổng quang điện 1 và kết thúc đêm khi tấm chắn vượt qua cổng quang điện 2.
+Bước 4: Gia tốc a được tính từ công thức: s = v0*t + 1/2*a*t^2 (đặt xe trượt có gắn tấm chấn sáng sao cho tấm chắn này sát với cổng quang điện 1 để v = 0; s= 0,5 m là khoảng cách giữa hai cổng quang điện trong thí nghiệm). Đo thời gian túng với mỗi làn thí nghiệm.
+
+Thảo luận:
+a) Dựa vào số liệu trong Bảng 15.1, hãy vẽ đồ thị chỉ sự phụ thuộc của gia tốc a:
+- Vào F (ứng với m + M = 0,5 kg), (Hình 15.3a). Đô thị có phải là đường tháng không? Tại sao?
+- Vào 1 m+M (ứng với F− 1 N), đồ thị có phải là đường thẳng không? Tại sao?
+b) Nếu kết luận về sự phụ thuộc của gia tốc vào độ lớn của lực tác dụng và khối lượng
+của vật.
+                    '''
+                , expand_x=True, expand_y=True, background_color='#fff', sbar_trough_color='#fff', sbar_background_color='#eeeeee', sbar_arrow_color='#fff', sbar_frame_color='#eeeeee')]
+            ], background_color='#eeeeee', title_color="#000", key="-1-"),
+            # bang so lieu
+            sg.Frame("Bảng số liệu", [
+            [sg.Table(
                 values=data, 
                 headings=headings, 
                 key="-t-", 
-                auto_size_columns=False,  
+                # auto_size_Frames=False,  
                 def_col_width=10, 
                 num_rows=10, 
                 justification="center", 
@@ -201,19 +215,43 @@ if __name__ == "__main__":
                 font=("Arial", 14, "bold"), 
                 # header_background_color=(), header_text_color=(),
                 header_relief=sg.RELIEF_SOLID,
-                background_color='#242526', 
-                text_color='#e7e9ed',
-                sbar_trough_color='#3a3b3c', 
-                sbar_background_color='#242526', 
-                sbar_arrow_color='#3a3b3c', 
-                sbar_frame_color='#242526', 
+                background_color='#fff', 
+                text_color='#000',
+                sbar_trough_color='#fff', 
+                sbar_background_color='#eeeeee', 
+                sbar_arrow_color='#fff', 
+                sbar_frame_color='#eeeeee', 
                 sbar_relief=sg.RELIEF_FLAT
-            )]], expand_x=True, expand_y=True, background_color='#242526'),  
+            )]], background_color='#eeeeee', title_color="#000", key="-2-"),  
         ],
-        [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#242526', text_color='#e7e9ed', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
+        [
+            # hinh anh thi nghiem
+            sg.Frame("Thiết lập thí nghiệm", [
+                [sg.Image(expand_x=True, expand_y=True, key="-img-", background_color='#eeeeee')]
+            ], background_color='#eeeeee', title_color="#000", key="-3-"),
+            # do thi bieu dien ket qua thi nghiem
+            sg.Frame("Đồ thị", [
+                [sg.Canvas(key='controls_cv', background_color='#eeeeee')],
+                [sg.Column(
+                    layout=[
+                        [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True)]
+                        ],
+                    background_color='#DAE0E6', pad=(0, 0), expand_x=True, expand_y=True),
+                ],
+            ], background_color='#eeeeee', title_color="#000", key="-4-"),
+        ],
+        [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#eeeeee', text_color='#000', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
     ]
     # tao cua so chuong trinh chinh
-    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#242526', size=(1400, 600))
+    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#eeeeee', size=(1400, 600))
+    win.bind('<Configure>', "Configure")
+
+    # load anh lan dau
+    path = ".//assets//img1.png"
+    im = Image.open(path)
+    im = im.resize((int(win.size[0] / 2), int(win.size[1] / 2)), resample=Image.BICUBIC)
+    image = ImageTk.PhotoImage(image=im)
+    win["-img-"].update(data=image)
 
     # tao do thi
     plt.figure(1)
@@ -245,9 +283,25 @@ if __name__ == "__main__":
                 print(data)
                 win["-t-"].update(values=data)
         except serial.serialutil.SerialException:
-            sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+            sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
             break
         e, v = win.read(timeout=500)
+        if e == 'Configure':
+            # lay chieu dai chieu rong
+            wlength = win.size[0] / 2
+            wheight = win.size[1] / 2
+            # cap nhat kich thuoc cua so
+            win["-1-"].set_size((wlength, wheight))
+            win["-2-"].set_size((wlength, wheight))
+            win["-3-"].set_size((wlength, wheight))
+            win["-4-"].set_size((wlength, wheight))
+            # cap nhat kich thuoc hinh anh
+            img_length = int(wlength) - int(int(wlength) * 5 / 100)
+            img_height = int(wheight) - int(int(wheight) * 10 / 100)
+            im = Image.open(path)
+            im = im.resize((img_length, img_height), resample=Image.BICUBIC)
+            image = ImageTk.PhotoImage(image=im)
+            win["-img-"].update(data=image)
         if e == sg.WIN_CLOSED or e == "Thoát":
             break
         if e == "Xuất đồ thị...":
@@ -256,15 +310,15 @@ if __name__ == "__main__":
             name = name.strftime("%d%m%y_%H%M%S") + ".xlsx"
             layout = [
                 [
-                    sg.Text("Chọn thư mục: ", background_color='#242526', text_color='#e7e9ed'), 
-                    sg.Input(key="-IN2-" ,change_submits=True, default_text=dir, background_color='#3a3b3c', text_color='#e7e9ed', border_width=0), 
-                    sg.FolderBrowse(key="-IN-", button_color=('#3a3b3c', '#e7e9ed'))
+                    sg.Text("Chọn thư mục: ", background_color='#eeeeee', text_color='#000'), 
+                    sg.Input(key="-IN2-" ,change_submits=True, default_text=dir, background_color='#fff', text_color='#000', border_width=0), 
+                    sg.FolderBrowse(key="-IN-", button_color=('#fff', '#000'))
                 ],
                 [
-                    sg.Button("Chọn", key="Submit", button_color=('#3a3b3c', '#e7e9ed'))
+                    sg.Button("Chọn", key="Submit", button_color=('#fff', '#000'))
                 ]
             ]
-            exp_win = sg.Window("Xuất đồ thị", layout, finalize=True, background_color='#242526')
+            exp_win = sg.Window("Xuất đồ thị", layout, finalize=True, background_color='#eeeeee')
             while True:
                 event, values = exp_win.read()
                 if event == sg.WIN_CLOSED or event=="Exit":
@@ -273,7 +327,7 @@ if __name__ == "__main__":
                     dir = values["-IN2-"]
                     dir = dir + f"/{name}"
                     xuatfiledothi(data, dir)
-                    sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}.", title="Hoàn tất", background_color='#242526', text_color='#e7e9ed', button_color=('#3a3b3c', '#e7e9ed'))
+                    sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}.", title="Hoàn tất", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
                     break
             exp_win.close()
 
