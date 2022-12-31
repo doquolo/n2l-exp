@@ -236,7 +236,7 @@ của vật.
                     layout=[
                         [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True)]
                         ],
-                    background_color='#DAE0E6', pad=(0, 0), expand_x=True, expand_y=True),
+                    background_color='#eeeeee', pad=(0, 0), expand_x=True, expand_y=True),
                 ],
             ], background_color='#eeeeee', title_color="#000", key="-4-"),
         ],
@@ -288,8 +288,8 @@ của vật.
         e, v = win.read(timeout=500)
         if e == 'Configure':
             # lay chieu dai chieu rong
-            wlength = win.size[0] / 2
-            wheight = win.size[1] / 2
+            wlength = int(win.size[0] / 2) - 20
+            wheight = int(win.size[1] / 2) - 20
             # cap nhat kich thuoc cua so
             win["-1-"].set_size((wlength, wheight))
             win["-2-"].set_size((wlength, wheight))
