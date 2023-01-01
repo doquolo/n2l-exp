@@ -126,6 +126,8 @@ def datain(ser, testcount, data, x, y):
         print(testcount, ". ", sout_decoded[2], "(ms)")
         testcount += 1
         while True:
+            # tạo input box trống -> đặt key -> update nội dung theo key
+            # dùng hàm ngoài để parse công thức
             layout = [
                 [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#eeeeee', text_color='#000')],
                 [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#eeeeee', text_color='#000')],
