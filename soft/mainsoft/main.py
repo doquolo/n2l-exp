@@ -51,9 +51,8 @@ def xuatfiledothi(data, dir):
     ws = wb.active
 
     rows = [
-        ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
     ]
-
+    rows.append(headings)
     for d in data: 
         rows.append(d)
 
@@ -161,15 +160,48 @@ def datain(ser, testcount, data, x, y):
         return data, testcount
 
 if __name__ == "__main__":
+    exp_temp = {
+        "name": "Định luật 2 newton",
+        "desc": '''Tiến hành:
+Bước 1: Lực kéo F có độ lớn tăng dần 1 N, 2 N và 3 N (bằng cách móc thêm các quả nặng vào đầu dây vắt qua ròng rọc). 
+Bước 2: Ghi vào Bảng 15.1 độ lớn lực kéo F và tổng khối lượng của hệ (gồm xe trượt và các quả nặng đặt vào xe), ứng với mỗi lần thí nghiệm.
+Bước 3: Do thời gian chuyển động của xe; đồng hồ bắt đầu đếm từ lúc tám chân sáng đi qua cổng quang điện 1 và kết thúc đêm khi tấm chắn vượt qua cổng quang điện 2.
+Bước 4: Gia tốc a được tính từ công thức: a = v0*t + 1/2*a*t^2 (đặt xe trượt có gắn tấm chấn sáng sao cho tấm chắn này sát với cổng quang điện 1 để v = 0; s= 0,5 m là khoảng cách giữa hai cổng quang điện trong thí nghiệm). Đo thời gian túng với mỗi làn thí nghiệm.
+
+Thảo luận:
+a) Dựa vào số liệu trong Bảng 15.1, hãy vẽ đồ thị chỉ sự phụ thuộc của gia tốc a:
+- Vào F (ứng với m + M = 0,5 kg), (Hình 15.3a). Đô thị có phải là đường tháng không? Tại sao?
+- Vào 1 m+M (ứng với F - 1 N), đồ thị có phải là đường thẳng không? Tại sao?
+b) Nếu kết luận về sự phụ thuộc của gia tốc vào độ lớn của lực tác dụng và khối lượng
+của vật.''',
+        "img": "assets//img1.png",
+        "table_data": {
+            "headers": ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
+            "measuring_data": 3,
+            "input_data": [1, 2, 4],
+            "calucating_data": {"5": {
+                    "formula": "(2*{})/({}*{})",
+                    "attrs": [4, 3, 3]
+                }
+            },
+        },
+        "plot": {
+            "name": "Đồ thị F-a",
+            "x_name": "Lực kéo F (N)",
+            "y_name": "Gia tốc a (m/s)",
+            "x_data": 1,
+            "y_data": 5,
+        }
+    }
     # init serial port
     ser, ser_desc = portselector()
     print(ser.name, ser_desc)
     # bien dem so lan thu
     testcount = 0
 
-    # du lieu cua bang trong gui
+    # du lieu cua bang
     data = []
-    headings = ["Lần thử", "Lực kéo (lt)", "Khối lượng", "△t", "Quãng đường", "Gia tốc"]
+    headings = exp_temp["table_data"]["headers"]
 
     # du lieu de ve do thi (x: luc keo - y: gia toc)
     x = []
@@ -186,21 +218,15 @@ if __name__ == "__main__":
             # noi dung thi nghiem
             sg.Frame("Mô tả thí nghiệm", [
                 [sg.Multiline(
-                    default_text=
-                    '''Tiến hành:
-Bước 1: Lực kéo F có độ lớn tăng dần 1 N, 2 N và 3 N (bằng cách móc thêm các quả nặng vào đầu dây vắt qua ròng rọc). 
-Bước 2: Ghi vào Bảng 15.1 độ lớn lực kéo F và tổng khối lượng của hệ (gồm xe trượt và các quả nặng đặt vào xe), ứng với mỗi lần thí nghiệm.
-Bước 3: Do thời gian chuyển động của xe; đồng hồ bắt đầu đếm từ lúc tám chân sáng đi qua cổng quang điện 1 và kết thúc đêm khi tấm chắn vượt qua cổng quang điện 2.
-Bước 4: Gia tốc a được tính từ công thức: s = v0*t + 1/2*a*t^2 (đặt xe trượt có gắn tấm chấn sáng sao cho tấm chắn này sát với cổng quang điện 1 để v = 0; s= 0,5 m là khoảng cách giữa hai cổng quang điện trong thí nghiệm). Đo thời gian túng với mỗi làn thí nghiệm.
-
-Thảo luận:
-a) Dựa vào số liệu trong Bảng 15.1, hãy vẽ đồ thị chỉ sự phụ thuộc của gia tốc a:
-- Vào F (ứng với m + M = 0,5 kg), (Hình 15.3a). Đô thị có phải là đường tháng không? Tại sao?
-- Vào 1 m+M (ứng với F− 1 N), đồ thị có phải là đường thẳng không? Tại sao?
-b) Nếu kết luận về sự phụ thuộc của gia tốc vào độ lớn của lực tác dụng và khối lượng
-của vật.
-                    '''
-                , expand_x=True, expand_y=True, background_color='#fff', sbar_trough_color='#fff', sbar_background_color='#eeeeee', sbar_arrow_color='#fff', sbar_frame_color='#eeeeee')]
+                    default_text=exp_temp["desc"],
+                    expand_x=True,
+                     expand_y=True,
+                     background_color='#fff',
+                     sbar_trough_color='#fff',
+                     sbar_background_color='#eeeeee',
+                     sbar_arrow_color='#fff',
+                     sbar_frame_color='#eeeeee'
+                )]
             ], background_color='#eeeeee', title_color="#000", key="-1-"),
             # bang so lieu
             sg.Frame("Bảng số liệu", [
@@ -249,7 +275,7 @@ của vật.
     win.bind('<Configure>', "Configure")
 
     # load anh lan dau
-    path = ".//assets//img1.png"
+    path = exp_temp["img"]
     im = Image.open(path)
     im = im.resize((int(win.size[0] / 2), int(win.size[1] / 2)), resample=Image.BICUBIC)
     image = ImageTk.PhotoImage(image=im)
@@ -268,9 +294,9 @@ của vật.
     # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 
     hl, = plt.plot(x, y)
-    plt.title('Đồ thị F-a')
-    plt.xlabel('Lực kéo F (N)')
-    plt.ylabel('Gia tốc a (m/s)')
+    plt.title(exp_temp["plot"]["name"])
+    plt.xlabel(exp_temp["plot"]["x_name"])
+    plt.ylabel(exp_temp["plot"]["y_name"])
     plt.grid()
     plt.xticks(np.arange(min([x for x in range(5)]), max([x for x in range(5)])+1, 1.0))
     plt.yticks(np.arange(min([y for y in range(5)]), max([y for y in range(5)])+1, 1.0))
