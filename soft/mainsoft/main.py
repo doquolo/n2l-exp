@@ -22,7 +22,9 @@ import datetime
 import base64
 # thu vien ve do thi
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 # This is to include a matplotlib figure in a Tkinter canvas
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
@@ -44,6 +46,18 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
         super(Toolbar, self).__init__(*args, **kwargs)
+
+# add point to existing scatter chart
+def addPoint(scat, new_point, c='k'):
+    old_off = scat.get_offsets()
+    new_off = np.concatenate([old_off,np.array(new_point, ndmin=2)])
+    old_c = scat.get_facecolors()
+    new_c = np.concatenate([old_c, np.array(mcolors.to_rgba(c), ndmin=2)])
+
+    scat.set_offsets(new_off)
+    scat.set_facecolors(new_c)
+
+    scat.axes.figure.canvas.draw_idle()
 
 # xuat do thi excel
 def xuatfiledothi(data, dir):
@@ -147,10 +161,11 @@ def datain(ser, testcount, data, x, y):
         # cap nhat du lieu tren do thi
         x.append(float(v[0]))
         y.append(acceleration)
-        hl.set_ydata(y)
-        hl.set_xdata(x)
-        plt.xticks(np.arange(min(x), max(x)+1, 1.0))
-        plt.yticks(np.arange(min(y), max(y)+1, 1.0))
+        # hl.set_ydata(y)
+        # hl.set_xdata(x)
+        addPoint(hl, [x[-1], y[-1]], 'pink')
+        # plt.xticks(np.arange(min(x), max(x)+1, 1.0))
+        # plt.yticks(np.arange(min(y), max(y)+1, 1.0))
         plt.draw()
         return data, testcount
     except Exception as e:
@@ -293,13 +308,13 @@ của vật.''',
     # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
     # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 
-    hl, = plt.plot(x, y)
+    hl = plt.scatter(x, y, cmap=matplotlib.cm.spring, c='pink')
     plt.title(exp_temp["plot"]["name"])
     plt.xlabel(exp_temp["plot"]["x_name"])
     plt.ylabel(exp_temp["plot"]["y_name"])
     plt.grid()
-    plt.xticks(np.arange(min([x for x in range(5)]), max([x for x in range(5)])+1, 1.0))
-    plt.yticks(np.arange(min([y for y in range(5)]), max([y for y in range(5)])+1, 1.0))
+    plt.xticks(np.arange(1, 7, 1.0))
+    plt.yticks(np.arange(1, 7, 1.0))
     draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
     plt.draw()
 
