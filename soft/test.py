@@ -29,7 +29,11 @@ của vật.''',
         "img": "assets//img1.png",
         "table_data": {
             "headers": ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
-            "measuring_data": 3,
+            "measuring_data": {
+                "title": "Thời gian",
+                "key": "-time-",
+                "index": 3,
+            },
             "input_data": [1, 2, 4],
             "calucating_data": {"5": {
                     "formula": "(2*{})/({}*{})",
