@@ -22,9 +22,12 @@ import datetime
 import base64
 # thu vien ve do thi
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 # This is to include a matplotlib figure in a Tkinter canvas
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from sklearn.metrics import r2_score
 
 # Embedding the Matplotlib toolbar into your application
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
@@ -44,6 +47,31 @@ def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
 class Toolbar(NavigationToolbar2Tk):
     def __init__(self, *args, **kwargs):
         super(Toolbar, self).__init__(*args, **kwargs)
+
+# add point to existing scatter chart
+def addPoint(scat, new_point, c='k'):
+    old_off = scat.get_offsets()
+    new_off = np.concatenate([old_off,np.array(new_point, ndmin=2)])
+    old_c = scat.get_facecolors()
+    new_c = np.concatenate([old_c, np.array(mcolors.to_rgba(c), ndmin=2)])
+
+    scat.set_offsets(new_off)
+    scat.set_facecolors(new_c)
+
+    scat.axes.figure.canvas.draw_idle()
+
+def update_trendline(plt, plotname, x1, y1):
+    z = np.polyfit(x1, y1, 1)
+    p = np.poly1d(z)
+
+    print(f"plot {plotname}: \n", x1, "\n", x2, "\n", z)
+    
+    plt.figure(plotname)
+
+    plt.plot(x1, p(x1), "r--")
+    text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$"
+    plt.gca().text(0.05, 0.95, text,transform=plt.gca().transAxes,
+        fontsize=14, verticalalignment='top')
 
 # xuat do thi excel
 def xuatfiledothi(data, dir):
@@ -145,13 +173,24 @@ def datain(ser, testcount, data, x, y):
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
         print(data)
         # cap nhat du lieu tren do thi
-        x.append(float(v[0]))
-        y.append(acceleration)
-        hl.set_ydata(y)
-        hl.set_xdata(x)
-        plt.xticks(np.arange(min(x), max(x)+1, 1.0))
-        plt.yticks(np.arange(min(y), max(y)+1, 1.0))
-        plt.draw()
+        # do thi 1 (loc du lieu co m+M = 0.5)
+        if (float(v[1]) == 0.5): 
+            x.append(1/(float(v[1])))
+            y.append(acceleration)
+            addPoint(hl, [x[-1], y[-1]], 'pink')
+            update_trendline(plt, 1, x, y)
+            plt.figure(1)
+            plt.draw()
+
+        # do thi 2 (loc du lieu co F = 1)
+        if (float(v[0])):
+            x2.append(float(v[0]))
+            y2.append(acceleration)
+            addPoint(hl2, [x2[-1], y2[-1]], 'pink')
+            update_trendline(plt, 2, x2, y2)
+            plt.figure(2)
+            plt.draw()
+
         return data, testcount
     except Exception as e:
         print("oops ", e)
@@ -177,21 +216,17 @@ của vật.''',
         "img": "assets//img1.png",
         "table_data": {
             "headers": ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
-            "measuring_data": 3,
-            "input_data": [1, 2, 4],
-            "calucating_data": {"5": {
-                    "formula": "(2*{})/({}*{})",
-                    "attrs": [4, 3, 3]
-                }
-            },
         },
         "plot": {
-            "name": "Đồ thị F-a",
-            "x_name": "Lực kéo F (N)",
-            "y_name": "Gia tốc a (m/s)",
-            "x_data": 1,
-            "y_data": 5,
-        }
+            "name": "Đồ thị F (const)",
+            "x_name": "1/m+M (kg)",
+            "y_name": "a (m/s)",
+        },
+        "plot2": {
+            "name": "Đồ thị m+M (const)",
+            "x_name": "F (N)",
+            "y_name": "a (m/s)",
+        },
     }
     # init serial port
     ser, ser_desc = portselector()
@@ -203,75 +238,103 @@ của vật.''',
     data = []
     headings = exp_temp["table_data"]["headers"]
 
-    # du lieu de ve do thi (x: luc keo - y: gia toc)
+    # du lieu de ve do thi 1 (x: 1/m+M - y: gia toc)
     x = []
     y = []
+
+    # du lieu de ve do thi 2 (x: luc keo - y: gia toc)
+    x2 = []
+    y2 = []
 
     # tao cua so chuong trinh
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
         ['&Trợ giúp', ['&Thông tin']]
     ]
+    tab_table = [
+        # bang so lieu
+        [sg.Table(
+            values=data, 
+            headings=headings, 
+            key="-t-", 
+            # auto_size_Frames=False,  
+            def_col_width=10, 
+            num_rows=10, 
+            justification="center", 
+            expand_x=True, 
+            expand_y=True, 
+            font=("Arial", 14, "bold"), 
+            # header_background_color=(), header_text_color=(),
+            header_relief=sg.RELIEF_SOLID,
+            background_color='#fff', 
+            text_color='#000',
+            sbar_trough_color='#fff', 
+            sbar_background_color='#eeeeee', 
+            sbar_arrow_color='#fff', 
+            sbar_frame_color='#eeeeee', 
+            sbar_relief=sg.RELIEF_FLAT
+        )],
+    ]
+    tab_plot1 = [
+         # do thi bieu dien ket qua thi nghiem
+        [sg.Canvas(key='controls_cv', background_color='#eeeeee')],
+        [sg.Column(
+            layout=[
+                [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True, size=(400 * 2, 400))]
+                ],
+            background_color='#eeeeee', pad=(0, 0), expand_x=True, expand_y=True),
+        ],
+    ]
+    tab_plot2 = [
+         # do thi bieu dien ket qua thi nghiem
+        [sg.Canvas(key='controls_cv2', background_color='#eeeeee')],
+        [sg.Column(
+            layout=[
+                [sg.Canvas(key='fig_cv2', expand_x=True, expand_y=True, size=(400 * 2, 400))]
+                ],
+            background_color='#eeeeee', pad=(0, 0), expand_x=True, expand_y=True),
+        ],
+    ]
     layout = [
         [sg.Menu(menu, tearoff=False)],
         [
-            # noi dung thi nghiem
-            sg.Frame("Mô tả thí nghiệm", [
-                [sg.Multiline(
-                    default_text=exp_temp["desc"],
-                    expand_x=True,
-                     expand_y=True,
-                     background_color='#fff',
-                     sbar_trough_color='#fff',
-                     sbar_background_color='#eeeeee',
-                     sbar_arrow_color='#fff',
-                     sbar_frame_color='#eeeeee'
-                )]
-            ], background_color='#eeeeee', title_color="#000", key="-1-"),
-            # bang so lieu
-            sg.Frame("Bảng số liệu", [
-            [sg.Table(
-                values=data, 
-                headings=headings, 
-                key="-t-", 
-                # auto_size_Frames=False,  
-                def_col_width=10, 
-                num_rows=10, 
-                justification="center", 
-                expand_x=True, 
-                expand_y=True, 
-                font=("Arial", 14, "bold"), 
-                # header_background_color=(), header_text_color=(),
-                header_relief=sg.RELIEF_SOLID,
-                background_color='#fff', 
-                text_color='#000',
-                sbar_trough_color='#fff', 
-                sbar_background_color='#eeeeee', 
-                sbar_arrow_color='#fff', 
-                sbar_frame_color='#eeeeee', 
-                sbar_relief=sg.RELIEF_FLAT
-            )]], background_color='#eeeeee', title_color="#000", key="-2-"),  
-        ],
-        [
-            # hinh anh thi nghiem
-            sg.Frame("Thiết lập thí nghiệm", [
-                [sg.Image(expand_x=True, expand_y=True, key="-img-", background_color='#eeeeee')]
-            ], background_color='#eeeeee', title_color="#000", key="-3-"),
-            # do thi bieu dien ket qua thi nghiem
-            sg.Frame("Đồ thị", [
-                [sg.Canvas(key='controls_cv', background_color='#eeeeee')],
-                [sg.Column(
-                    layout=[
-                        [sg.Canvas(key='fig_cv', expand_x=True, expand_y=True)]
-                        ],
-                    background_color='#eeeeee', pad=(0, 0), expand_x=True, expand_y=True),
+            sg.Column([
+                [
+                    # noi dung thi nghiem
+                    sg.Frame("Mô tả thí nghiệm", [
+                        [sg.Multiline(
+                            default_text=exp_temp["desc"],
+                            expand_x=True,
+                            expand_y=True,
+                            background_color='#fff',
+                            sbar_trough_color='#fff',
+                            sbar_background_color='#eeeeee',
+                            sbar_arrow_color='#fff',
+                            sbar_frame_color='#eeeeee'
+                        )]
+                    ], background_color='#eeeeee', title_color="#000", key="-1-"),
                 ],
-            ], background_color='#eeeeee', title_color="#000", key="-4-"),
+                [
+                    # hinh anh thi nghiem
+                    sg.Frame("Thiết lập thí nghiệm", [
+                        [sg.Image(expand_x=True, expand_y=True, key="-img-", background_color='#eeeeee')]
+                    ], background_color='#eeeeee', title_color="#000", key="-2-"),
+                ],
+            ], background_color='#eeeeee'),
+            sg.Frame("Kết quả", [
+                [sg.TabGroup([
+                    [
+                        sg.Tab('Bảng số liệu', tab_table, background_color='#eeeeee'),
+                        sg.Tab('Đồ thị 1', tab_plot1, background_color='#eeeeee'),
+                        sg.Tab('Đồ thị 2', tab_plot2, background_color='#eeeeee'),
+                    ]
+                ], background_color="#eeeeee", selected_title_color="#eeeee1", key="-4-")],
+            ], background_color='#eeeeee', title_color="#000", key="-3-")
         ],
-        [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#eeeeee', text_color='#000', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
+        # [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#eeeeee', text_color='#000', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
     ]
     # tao cua so chuong trinh chinh
-    win = sg.Window(f"Kết quả đo", layout, resizable=True, finalize=True, background_color='#eeeeee', size=(1400, 600))
+    win = sg.Window(f"Kết quả đo - {ser.name}: {ser_desc}", layout, resizable=True, finalize=True, background_color='#eeeeee', size=(1400, 600))
     win.bind('<Configure>', "Configure")
 
     # load anh lan dau
@@ -281,7 +344,7 @@ của vật.''',
     image = ImageTk.PhotoImage(image=im)
     win["-img-"].update(data=image)
 
-    # tao do thi
+    # tao do thi 1
     plt.figure(1)
     fig = plt.gcf()
     DPI = fig.get_dpi()
@@ -293,15 +356,47 @@ của vật.''',
     # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
     # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 
-    hl, = plt.plot(x, y)
+    hl = plt.scatter(x, y, cmap=matplotlib.cm.spring)
     plt.title(exp_temp["plot"]["name"])
     plt.xlabel(exp_temp["plot"]["x_name"])
     plt.ylabel(exp_temp["plot"]["y_name"])
-    plt.grid()
-    plt.xticks(np.arange(min([x for x in range(5)]), max([x for x in range(5)])+1, 1.0))
-    plt.yticks(np.arange(min([y for y in range(5)]), max([y for y in range(5)])+1, 1.0))
+    plt.grid(alpha=0.5)
+    plt.xticks(np.arange(1, 7, 1.0))
+    plt.yticks(np.arange(1, 7, 1.0))
     draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
     plt.draw()
+
+    if (len(x) != 0 and len(y) != 0): 
+        update_trendline(plt, 1, x, y)
+        plt.figure(1)
+        plt.draw()
+
+    # tao do thi 2
+    plt.figure(2)
+    fig2 = plt.gcf()
+    DPI2 = fig2.get_dpi()
+
+    ax2 = plt.gca()
+    ax2.set_xlim(xmin = 0)
+    ax2.set_ylim(ymin = 0)
+
+    # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
+    # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
+
+    hl2 = plt.scatter(x2, y2, cmap=matplotlib.cm.spring)
+    plt.title(exp_temp["plot2"]["name"])
+    plt.xlabel(exp_temp["plot2"]["x_name"])
+    plt.ylabel(exp_temp["plot2"]["y_name"])
+    plt.grid(alpha=0.5)
+    plt.xticks(np.arange(1, 7, 1.0))
+    plt.yticks(np.arange(1, 7, 1.0))
+    draw_figure_w_toolbar(win['fig_cv2'].TKCanvas, fig2, win['controls_cv2'].TKCanvas)
+    plt.draw()
+
+    if (len(x2) != 0 and len(y2) != 0):
+        update_trendline(plt, 2, x2, y2)
+        plt.figure(2)
+        plt.draw()
 
     # event loop
     while True:
@@ -321,8 +416,8 @@ của vật.''',
             # cap nhat kich thuoc cua so
             win["-1-"].set_size((wlength, wheight))
             win["-2-"].set_size((wlength, wheight))
-            win["-3-"].set_size((wlength, wheight))
-            win["-4-"].set_size((wlength, wheight))
+            win["-3-"].set_size((min(win.size), min(win.size)))
+            win["-4-"].set_size((min(win.size), min(win.size)))
             # cap nhat kich thuoc hinh anh
             img_length = int(wlength) - int(int(wlength) * 5 / 100)
             img_height = int(wheight) - int(int(wheight) * 10 / 100)
