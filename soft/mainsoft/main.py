@@ -64,7 +64,7 @@ def update_trendline(plt, plotname, x1, y1):
     z = np.polyfit(x1, y1, 1)
     p = np.poly1d(z)
 
-    print(f"plot {plotname}: \n", x1, "\n", x2, "\n", z)
+    # print(f"plot {plotname}: \n", x1, "\n", x2, "\n", z)
     
     plt.figure(plotname)
 
@@ -146,6 +146,7 @@ def portselector():
 
 # ham su li du lieu vao tu thiet bi do
 def datain(ser, testcount, data, x, y):
+    global hl, hl2
     sout = ser.readline()
     sout_decoded = str(sout).split(";")
     print(sout_decoded)
@@ -163,7 +164,7 @@ def datain(ser, testcount, data, x, y):
                 [sg.Text("Quãng đường:         ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
                 [sg.Submit(button_text="Hoàn tất",  button_color=('#fff', '#000'))]
             ]
-            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#eeeeee', font=('Arial', 14))
+            win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#eeeeee', font=('Arial', 14), keep_on_top=True)
             e, v = win.read()
             win.close()
             if (v[0] != "" and v[1] != "" and v[2] != ""): break
@@ -175,21 +176,13 @@ def datain(ser, testcount, data, x, y):
         # cap nhat du lieu tren do thi
         # do thi 1 (loc du lieu co m+M = 0.5)
         if (float(v[1]) == 0.5): 
-            x.append(1/(float(v[1])))
+            x.append(float(v[0]))
             y.append(acceleration)
-            addPoint(hl, [x[-1], y[-1]], 'pink')
-            update_trendline(plt, 1, x, y)
-            plt.figure(1)
-            plt.draw()
 
         # do thi 2 (loc du lieu co F = 1)
-        if (float(v[0])):
-            x2.append(float(v[0]))
+        if (float(v[0]) == 1):
+            x2.append(1/(float(v[1])))
             y2.append(acceleration)
-            addPoint(hl2, [x2[-1], y2[-1]], 'pink')
-            update_trendline(plt, 2, x2, y2)
-            plt.figure(2)
-            plt.draw()
 
         return data, testcount
     except Exception as e:
@@ -356,7 +349,7 @@ của vật.''',
     # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
     # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 
-    hl = plt.scatter(x, y, cmap=matplotlib.cm.spring)
+    hl = plt.scatter(x, y)
     plt.title(exp_temp["plot"]["name"])
     plt.xlabel(exp_temp["plot"]["x_name"])
     plt.ylabel(exp_temp["plot"]["y_name"])
@@ -383,7 +376,7 @@ của vật.''',
     # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
     # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
 
-    hl2 = plt.scatter(x2, y2, cmap=matplotlib.cm.spring)
+    hl2 = plt.scatter(x2, y2)
     plt.title(exp_temp["plot2"]["name"])
     plt.xlabel(exp_temp["plot2"]["x_name"])
     plt.ylabel(exp_temp["plot2"]["y_name"])
@@ -404,6 +397,64 @@ của vật.''',
             if (ser.in_waiting != 0):
                 data, testcount = datain(ser, testcount, data, x, y)
                 print(data)
+                # cap nhat do thi
+                if (len(x) != 0 and len(y) != 0):
+
+                    # ve lai do thi 1
+                    plt.figure(1)
+
+                    plt.clf()
+                    fig = plt.gcf()
+                    DPI = fig.get_dpi()
+
+                    ax = plt.gca()
+                    ax.set_xlim(xmin = 0)
+                    ax.set_ylim(ymin = 0)
+
+                    hl = plt.scatter(x, y, cmap=matplotlib.cm.spring)
+                    plt.title(exp_temp["plot"]["name"])
+                    plt.xlabel(exp_temp["plot"]["x_name"])
+                    plt.ylabel(exp_temp["plot"]["y_name"])
+                    plt.grid(alpha=0.5)
+                    plt.xticks(np.arange(1, 7, 1.0))
+                    plt.yticks(np.arange(1, 7, 1.0))
+                    draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
+                    plt.draw()
+
+                    # ve trendline do thi 1
+                    update_trendline(plt, 1, x, y)
+                    plt.figure(1)
+                    plt.draw()
+
+                if (len(x2) != 0 and len(y2) != 0):
+                    
+                    # ve lai do thi 2
+                    plt.figure(2)
+
+                    plt.clf()
+                    fig2 = plt.gcf()
+                    DPI2 = fig2.get_dpi()
+
+                    ax2 = plt.gca()
+                    ax2.set_xlim(xmin = 0)
+                    ax2.set_ylim(ymin = 0)
+                    hl2 = plt.scatter(x2, y2, cmap=matplotlib.cm.spring)
+
+                    plt.title(exp_temp["plot2"]["name"])
+                    plt.xlabel(exp_temp["plot2"]["x_name"])
+                    plt.ylabel(exp_temp["plot2"]["y_name"])
+                    plt.grid(alpha=0.5)
+                    plt.xticks(np.arange(1, 7, 1.0))
+                    plt.yticks(np.arange(1, 7, 1.0))
+                    draw_figure_w_toolbar(win['fig_cv2'].TKCanvas, fig2, win['controls_cv2'].TKCanvas)
+                    plt.draw()
+
+                    # ve trendline do thi 2
+                    update_trendline(plt, 2, x2, y2)
+                    plt.figure(2)
+                    plt.draw()
+
+                # cap nhat bang
                 win["-t-"].update(values=data)
         except serial.serialutil.SerialException:
             sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
