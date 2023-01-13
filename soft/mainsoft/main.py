@@ -75,17 +75,22 @@ def update_trendline(plt, plotname, x1, y1):
 
 # xuat do thi excel
 def xuatfiledothi(data, dir):
+    # TODO: create two scatter plot for when F is a constant and m+M is a constant
+    # add a trendline with its equation
     wb = Workbook()
     ws = wb.active
 
     rows = [
     ]
     rows.append(headings)
+
     for d in data: 
         rows.append(d)
 
     for row in rows:
         ws.append(row)
+
+    print("endpoint: ", endpoint)
 
     rowcount = len(rows)
 
@@ -324,7 +329,6 @@ của vật.''',
                 ], background_color="#eeeeee", selected_title_color="#eeeee1", key="-4-")],
             ], background_color='#eeeeee', title_color="#000", key="-3-")
         ],
-        # [sg.StatusBar(f"Đã kết nối tới cổng {ser.name} ({ser_desc})", background_color='#eeeeee', text_color='#000', size=(100,1), pad=(0,0), relief=sg.RELIEF_FLAT, justification='right', visible=True,)]
     ]
     # tao cua so chuong trinh chinh
     win = sg.Window(f"Kết quả đo - {ser.name}: {ser_desc}", layout, resizable=True, finalize=True, background_color='#eeeeee', size=(1400, 600))
