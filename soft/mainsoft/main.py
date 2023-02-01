@@ -1,3 +1,5 @@
+# TODO: thêm tính năng edit kết quả sau khi đo
+
 # thu vien gui
 import PySimpleGUI as sg
 # thu vien lay du lieu serial
@@ -150,7 +152,7 @@ def portselector():
     return ser, str(ports[int(v[0])-1].description)
 
 # ham su li du lieu vao tu thiet bi do
-def datain(ser, testcount, data, x, y):
+def datain(ser, testcount, data, x, y, sample1 = 0.5, sample2 = 1, offset = 0.05):
     global hl, hl2
     sout = ser.readline()
     sout_decoded = str(sout).split(";")
@@ -179,13 +181,15 @@ def datain(ser, testcount, data, x, y):
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
         print(data)
         # cap nhat du lieu tren do thi
-        # do thi 1 (loc du lieu co m+M = 0.5)
-        if (float(v[1]) == 0.5): 
+        # TODO: add offset + ability to change sample data
+
+        # do thi 1 (loc du lieu co m+M = sample1 va co sai so la offset) - default la 0.5 - offset 0.05 
+        if ((float(v[1]) <= (sample1+offset)) and (float(v[1]) >= (sample1-offset))): 
             x.append(float(v[0]))
             y.append(acceleration)
 
-        # do thi 2 (loc du lieu co F = 1)
-        if (float(v[0]) == 1):
+        # do thi 2 (loc du lieu co F = sample2 va co sai so la offset) - default la 1 - offset 0.05
+        if ((float(v[0]) <= (sample2+offset)) and (float(v[0]) >= (sample2-offset))): 
             x2.append(1/(float(v[1])))
             y2.append(acceleration)
 
