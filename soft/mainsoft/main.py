@@ -152,7 +152,7 @@ def portselector():
     return ser, str(ports[int(v[0])-1].description)
 
 # ham su li du lieu vao tu thiet bi do
-def datain(ser, testcount, data, x, y, sample1 = 0.5, sample2 = 1, offset = 0.05):
+def datain(ser, testcount, data):
     global hl, hl2
     sout = ser.readline()
     sout_decoded = str(sout).split(";")
@@ -183,15 +183,8 @@ def datain(ser, testcount, data, x, y, sample1 = 0.5, sample2 = 1, offset = 0.05
         # cap nhat du lieu tren do thi
         # TODO: add offset + ability to change sample data
 
-        # do thi 1 (loc du lieu co m+M = sample1 va co sai so la offset) - default la 0.5 - offset 0.05 
-        if ((float(v[1]) <= (sample1+offset)) and (float(v[1]) >= (sample1-offset))): 
-            x.append(float(v[0]))
-            y.append(acceleration)
-
-        # do thi 2 (loc du lieu co F = sample2 va co sai so la offset) - default la 1 - offset 0.05
-        if ((float(v[0]) <= (sample2+offset)) and (float(v[0]) >= (sample2-offset))): 
-            x2.append(1/(float(v[1])))
-            y2.append(acceleration)
+        
+        
 
         return data, testcount
     except Exception as e:
@@ -237,7 +230,9 @@ của vật.''',
     testcount = 0
 
     # du lieu cua bang
-    data = []
+    # for testing purposes - removed in release
+    data = [[1, 1.0, 0.3, 0.55, 0.5, 3.31], [2, 1.0, 0.4, 0.64, 0.5, 2.44], [3, 1.0, 0.5, 0.71, 0.5, 1.98], [4, 2.0, 0.5, 0.5, 0.5, 4.0], [5, 3.0, 0.5, 0.42, 0.5, 5.67]]
+    # data = []
     headings = exp_temp["table_data"]["headers"]
 
     # du lieu de ve do thi 1 (x: 1/m+M - y: gia toc)
@@ -247,6 +242,11 @@ của vật.''',
     # du lieu de ve do thi 2 (x: luc keo - y: gia toc)
     x2 = []
     y2 = []
+
+    # offset + sampling data
+    sample1 = 0.5
+    sample2 = 1
+    offset = 0.05
 
     # tao cua so chuong trinh
     menu = [
@@ -327,10 +327,10 @@ của vật.''',
                 [sg.TabGroup([
                     [
                         sg.Tab('Bảng số liệu', tab_table, background_color='#eeeeee'),
-                        sg.Tab('Đồ thị 1', tab_plot1, background_color='#eeeeee'),
-                        sg.Tab('Đồ thị 2', tab_plot2, background_color='#eeeeee'),
+                        sg.Tab('Đồ thị 1', tab_plot1, background_color='#eeeeee', key='tab1'),
+                        sg.Tab('Đồ thị 2', tab_plot2, background_color='#eeeeee', key='tab2'),
                     ]
-                ], background_color="#eeeeee", selected_title_color="#eeeee1", key="-4-")],
+                ], background_color="#eeeeee", selected_title_color="#eeeee1", key="-4-", enable_events=True)],
             ], background_color='#eeeeee', title_color="#000", key="-3-")
         ],
     ]
@@ -345,129 +345,82 @@ của vật.''',
     image = ImageTk.PhotoImage(image=im)
     win["-img-"].update(data=image)
 
-    # tao do thi 1
-    plt.figure(1)
-    fig = plt.gcf()
-    DPI = fig.get_dpi()
+    prev_tab = None
 
-    ax = plt.gca()
-    ax.set_xlim(xmin = 0)
-    ax.set_ylim(ymin = 0)
+    def createFig(plotname, plotnum, x, y, figure_cv, ctrl_cv):
+        # ve lai do thi 1
+        plt.figure(plotnum)
 
-    # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
-    # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
+        plt.clf()
+        fig = plt.gcf()
+        DPI = fig.get_dpi()
 
-    hl = plt.scatter(x, y)
-    plt.title(exp_temp["plot"]["name"])
-    plt.xlabel(exp_temp["plot"]["x_name"])
-    plt.ylabel(exp_temp["plot"]["y_name"])
-    plt.grid(alpha=0.5)
-    plt.xticks(np.arange(1, 7, 1.0))
-    plt.yticks(np.arange(1, 7, 1.0))
-    draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
-    plt.draw()
+        ax = plt.gca()
+        ax.set_xlim(xmin = 0)
+        ax.set_ylim(ymin = 0)
 
-    if (len(x) != 0 and len(y) != 0): 
-        update_trendline(plt, 1, x, y)
-        plt.figure(1)
+        hl = plt.scatter(x, y, cmap=matplotlib.cm.spring)
+        plt.title(exp_temp[plotname]["name"])
+        plt.xlabel(exp_temp[plotname]["x_name"])
+        plt.ylabel(exp_temp[plotname]["y_name"])
+        plt.grid(alpha=0.5)
+        plt.xticks(np.arange(1, 7, 1.0))
+        plt.yticks(np.arange(1, 7, 1.0))
+        draw_figure_w_toolbar(win[figure_cv].TKCanvas, fig, win[ctrl_cv].TKCanvas)
         plt.draw()
 
-    # tao do thi 2
-    plt.figure(2)
-    fig2 = plt.gcf()
-    DPI2 = fig2.get_dpi()
+        # ve trendline do thi 1
+        if (len(x) != 0 and len(y) != 0): 
+            update_trendline(plt, plotnum, x, y)
+            plt.figure(plotnum)
+            plt.draw()
 
-    ax2 = plt.gca()
-    ax2.set_xlim(xmin = 0)
-    ax2.set_ylim(ymin = 0)
-
-    # you have to play with this size to reduce the movement error when the mouse hovers over the figure, it's close to canvas size
-    # fig.set_size_inches(404 * 2 / float(DPI), 404 / float(DPI))
-
-    hl2 = plt.scatter(x2, y2)
-    plt.title(exp_temp["plot2"]["name"])
-    plt.xlabel(exp_temp["plot2"]["x_name"])
-    plt.ylabel(exp_temp["plot2"]["y_name"])
-    plt.grid(alpha=0.5)
-    plt.xticks(np.arange(1, 7, 1.0))
-    plt.yticks(np.arange(1, 7, 1.0))
-    draw_figure_w_toolbar(win['fig_cv2'].TKCanvas, fig2, win['controls_cv2'].TKCanvas)
-    plt.draw()
-
-    if (len(x2) != 0 and len(y2) != 0):
-        update_trendline(plt, 2, x2, y2)
-        plt.figure(2)
-        plt.draw()
+    createFig("plot", 1, x, y, 'fig_cv', 'controls_cv')
+    createFig("plot2", 2, x2, y2, 'fig_cv2', 'controls_cv2')
 
     # event loop
     while True:
         try:
             if (ser.in_waiting != 0):
-                data, testcount = datain(ser, testcount, data, x, y)
+                data, testcount = datain(ser, testcount, data)
                 print(data)
-                # cap nhat do thi
-                if (len(x) != 0 and len(y) != 0):
-
-                    # ve lai do thi 1
-                    plt.figure(1)
-
-                    plt.clf()
-                    fig = plt.gcf()
-                    DPI = fig.get_dpi()
-
-                    ax = plt.gca()
-                    ax.set_xlim(xmin = 0)
-                    ax.set_ylim(ymin = 0)
-
-                    hl = plt.scatter(x, y, cmap=matplotlib.cm.spring)
-                    plt.title(exp_temp["plot"]["name"])
-                    plt.xlabel(exp_temp["plot"]["x_name"])
-                    plt.ylabel(exp_temp["plot"]["y_name"])
-                    plt.grid(alpha=0.5)
-                    plt.xticks(np.arange(1, 7, 1.0))
-                    plt.yticks(np.arange(1, 7, 1.0))
-                    draw_figure_w_toolbar(win['fig_cv'].TKCanvas, fig, win['controls_cv'].TKCanvas)
-                    plt.draw()
-
-                    # ve trendline do thi 1
-                    update_trendline(plt, 1, x, y)
-                    plt.figure(1)
-                    plt.draw()
-
-                if (len(x2) != 0 and len(y2) != 0):
-                    
-                    # ve lai do thi 2
-                    plt.figure(2)
-
-                    plt.clf()
-                    fig2 = plt.gcf()
-                    DPI2 = fig2.get_dpi()
-
-                    ax2 = plt.gca()
-                    ax2.set_xlim(xmin = 0)
-                    ax2.set_ylim(ymin = 0)
-                    hl2 = plt.scatter(x2, y2, cmap=matplotlib.cm.spring)
-
-                    plt.title(exp_temp["plot2"]["name"])
-                    plt.xlabel(exp_temp["plot2"]["x_name"])
-                    plt.ylabel(exp_temp["plot2"]["y_name"])
-                    plt.grid(alpha=0.5)
-                    plt.xticks(np.arange(1, 7, 1.0))
-                    plt.yticks(np.arange(1, 7, 1.0))
-                    draw_figure_w_toolbar(win['fig_cv2'].TKCanvas, fig2, win['controls_cv2'].TKCanvas)
-                    plt.draw()
-
-                    # ve trendline do thi 2
-                    update_trendline(plt, 2, x2, y2)
-                    plt.figure(2)
-                    plt.draw()
-
                 # cap nhat bang
                 win["-t-"].update(values=data)
         except serial.serialutil.SerialException:
             sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
             break
         e, v = win.read(timeout=500)
+        # cap nhat do thi
+        if prev_tab != v['-4-']:
+            prev_tab = v['-4-']
+            if v['-4-'] == 'tab1':
+                print("recalulating fig 1")
+                # du lieu de ve do thi 1 (x: luc keo - y: gia toc)
+                x = []
+                y = []
+                # do thi 1 (loc du lieu co m+M = sample1 va co sai so la offset) - default la 0.5 - offset 0.05 
+                for d in data:
+                    if (d[2] <= (sample1+offset)) and (d[2] >= (sample1-offset)): 
+                        x.append(d[1])
+                        y.append(d[5])
+                createFig("plot", 1, x, y, 'fig_cv', 'controls_cv')
+                print(x)
+                print(y)
+
+            if v['-4-'] == 'tab2': 
+                print("recalulating fig 2")
+                # du lieu de ve do thi 2 (x: 1/m+M - y: gia toc)
+                x2 = []
+                y2 = []
+                # do thi 2 (loc du lieu co F = sample2 va co sai so la offset) - default la 1 - offset 0.05
+                for d in data:
+                    if (d[1] <= (sample2+offset)) and (d[1] >= (sample2-offset)): 
+                        x2.append(1/float(d[2]))
+                        y2.append(d[5])
+                createFig("plot2", 2, x2, y2, 'fig_cv2', 'controls_cv2')
+                print(x2)
+                print(y2)
+
         if e == 'Configure':
             # lay chieu dai chieu rong
             wlength = int(win.size[0] / 2) - 20
