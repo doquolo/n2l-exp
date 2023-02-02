@@ -213,13 +213,13 @@ của vật.''',
             "headers": ["Lần thử", "Lực kéo (lt)", "Khối lượng", "Thời gian", "Quãng đường", "Gia tốc"],
         },
         "plot": {
-            "name": "Đồ thị F (const)",
-            "x_name": "1/m+M (kg)",
+            "name": "Đồ thị m+M (const)",
+            "x_name": "F (N)",
             "y_name": "a (m/s)",
         },
         "plot2": {
-            "name": "Đồ thị m+M (const)",
-            "x_name": "F (N)",
+            "name": "Đồ thị F (const)",
+            "x_name": "m+M (kg)",
             "y_name": "a (m/s)",
         },
     }
@@ -235,11 +235,11 @@ của vật.''',
     # data = []
     headings = exp_temp["table_data"]["headers"]
 
-    # du lieu de ve do thi 1 (x: 1/m+M - y: gia toc)
+    # du lieu de ve do thi 1 (x: luc keo - y: gia toc)
     x = []
     y = []
 
-    # du lieu de ve do thi 2 (x: luc keo - y: gia toc)
+    # du lieu de ve do thi 2 (x: 1/m+M - y: gia toc)
     x2 = []
     y2 = []
 
