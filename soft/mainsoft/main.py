@@ -31,6 +31,99 @@ import matplotlib.colors as mcolors
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from sklearn.metrics import r2_score
 
+# ham chinh sua du lieu tren bang
+def edit_cell(window, key, row, col, tdata, justify='left'):
+
+    global textvariable, edit
+
+    def return_callback(event):
+        global edit
+        # event.widget gives you the same entry widget we created earlier
+        widget = event.widget
+        # Destroy the entry widget
+        widget.destroy()
+        # Destroy all widgets
+        widget.master.destroy()
+        edit = False
+        return
+
+    def callback(event, row, col, text, key, tdata):
+        global edit, data
+        # event.widget gives you the same entry widget we created earlier
+        widget = event.widget
+        if key == 'return':
+            # Get new text that has been typed into widget
+            text = widget.get()
+            # Print to terminal
+            print(f"col {col}, row {row-1} edited: {text}")
+            # editing the data itself
+            text = float(text)
+            tdata[row-1][col] = text
+            # re-evaluate data after changes
+            tdata = evaluate_data(tdata)
+            # print out edited data
+            print(tdata[row-1])
+            # update table
+            window['-t-'].update(values=data)
+
+        # Destroy the entry widget
+        widget.destroy()
+        # Destroy all widgets
+        widget.master.destroy()
+        # Get the row from the table that was edited
+        # table variable exists here because it was called before the callback
+        values = list(table.item(row, 'values'))
+        # Store new value in the appropriate row and column
+        values[col] = text
+        table.item(row, values=values)
+        edit = False
+
+    if edit or row <= 0:
+        return
+
+    edit = True
+    # Get the Tkinter functionality for our window
+    root = window.TKroot
+    # Gets the Widget object from the PySimpleGUI table - a PySimpleGUI table is really
+    # what's called a TreeView widget in TKinter
+    table = window[key].Widget
+    # Get the row as a dict using .item function and get individual value using [col]
+    # Get currently selected value
+    text = table.item(row, "values")[col]
+    # Return x and y position of cell as well as width and height (in TreeView widget)
+    x, y, width, height = table.bbox(row, col)
+    wheight = int(window.size[1] / 2) + 20
+    yy = wheight + y
+
+    # Create a new container that acts as container for the editable text input widget
+    frame = sg.tk.Frame(root)
+    # put frame in same location as selected cell
+    frame.place(x=x, y=yy, anchor="nw", width=width, height=height)
+
+    # textvariable represents a text value
+    textvariable = sg.tk.StringVar()
+    textvariable.set(text)
+    # Used to acceot single line text input from user - editable text input
+    # frame is the parent window, textvariable is the initial value, justify is the position
+    entry = sg.tk.Entry(frame, textvariable=textvariable, justify=justify)
+    # Organizes widgets into blocks before putting them into the parent
+    entry.pack()
+    # selects all text in the entry input widget
+    entry.select_range(0, sg.tk.END)
+    # Puts cursor at end of input text
+    entry.icursor(sg.tk.END)
+    # Forces focus on the entry widget (actually when the user clicks because this initiates all this Tkinter stuff, e
+    # ending with a focus on what has been created)
+    entry.focus_force()
+    # lambda e generates an empty function, which is turned into an event function 
+    # which corresponds to the "return" (the event created when the user press enter)
+    entry.bind("<Return>", lambda e, r=row, c=col, t=text, k='return', td=tdata:callback(e, r, c, t, k, td))
+    # We want the user to be able to not make any accidental changes to the table data
+    # so it is expected for the user to hit esc or click outside the editing area to 
+    # cancel.
+    entry.bind("<FocusOut>", lambda e: return_callback(e))
+    entry.bind("<Escape>", lambda e: return_callback(e))
+
 # Embedding the Matplotlib toolbar into your application
 def draw_figure_w_toolbar(canvas, fig, canvas_toolbar):
     if canvas.children:
@@ -180,11 +273,6 @@ def datain(ser, testcount, data):
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
         data.append([testcount, float(v[0]), float(v[1]), time, float(v[2]), acceleration])
         print(data)
-        # cap nhat du lieu tren do thi
-        # TODO: add offset + ability to change sample data
-
-        
-        
 
         return data, testcount
     except Exception as e:
@@ -192,6 +280,13 @@ def datain(ser, testcount, data):
         sg.Popup(e, title="Lỗi", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
         testcount =  (testcount - 1) if testcount >= 2 else testcount
         return data, testcount
+
+# ham tinh lai ket qua 
+def evaluate_data(data):
+    for d in data:
+        acceleration = round(((float(d[4])*2)/(d[3]*d[3])), 2)
+        d[5] = acceleration
+    return d
 
 if __name__ == "__main__":
     exp_temp = {
@@ -226,8 +321,12 @@ của vật.''',
     # init serial port
     ser, ser_desc = portselector()
     print(ser.name, ser_desc)
+
     # bien dem so lan thu
     testcount = 0
+
+    # trang thai bang
+    edit = False
 
     # du lieu cua bang
     # for testing purposes - removed in release
@@ -251,6 +350,7 @@ của vật.''',
     offset = 0.05
 
     # tao cua so chuong trinh
+    sg.set_options(dpi_awareness=True)
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
         ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng'], '&Đồ thị', ['Thiết lập...']]],
@@ -277,7 +377,8 @@ của vật.''',
             sbar_background_color='#eeeeee', 
             sbar_arrow_color='#fff', 
             sbar_frame_color='#eeeeee', 
-            sbar_relief=sg.RELIEF_FLAT
+            sbar_relief=sg.RELIEF_FLAT,
+            enable_click_events=True
         )],
     ]
     tab_plot1 = [
@@ -385,6 +486,13 @@ của vật.''',
             sg.Popup("Thiết bị đo đã ngắt kết nối!", title="Thông báo", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
             break
         e, v = win.read(timeout=500)
+
+        # Checks if the event object is of tuple data type, indicating a click on a cell'
+        if isinstance(e, tuple):
+            if isinstance(e[2][0], int) and e[2][0] > -1:
+                cell = row, col = e[2]
+            edit_cell(win, '-t-', row+1, col, data, justify='right')
+
         # cap nhat do thi
         if prev_tab != v['-4-']:
             prev_tab = v['-4-']
