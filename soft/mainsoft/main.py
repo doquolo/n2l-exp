@@ -353,7 +353,7 @@ của vật.''',
     sg.set_options(dpi_awareness=True)
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
-        ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng'], '&Đồ thị', ['Thiết lập...']]],
+        ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng', 'Bật chỉnh sửa'], '&Đồ thị', ['Thiết lập...']]],
         ['&Trợ giúp', ['&Thông tin']]
     ]
     tab_table = [
@@ -378,7 +378,7 @@ của vật.''',
             sbar_arrow_color='#fff', 
             sbar_frame_color='#eeeeee', 
             sbar_relief=sg.RELIEF_FLAT,
-            enable_click_events=True
+            enable_click_events=False
         )],
     ]
     tab_plot1 = [
@@ -402,7 +402,7 @@ của vật.''',
         ],
     ]
     layout = [
-        [sg.Menu(menu, tearoff=False)],
+        [sg.Menu(menu, tearoff=False, key='-menu-')],
         [
             sg.Column([
                 [
@@ -575,6 +575,18 @@ của vật.''',
                 cfg.close()
             else:
                 pass
+        
+        # TODO: where tf is this error come from
+        #   win['-t-'].update(enable_click_events=True)
+        # TypeError: update() got an unexpected keyword argument 'enable_click_events'
+        if e == "Bật chỉnh sửa":
+            win['-t-'].update(enable_click_events=True)
+            menu[1][1][1][1] = "Tắt chỉnh sửa"
+            win['-menu-'].update(menu_definition=menu)
+        if e == "Tắt chỉnh sửa":
+            win['-t-'].update(enable_click_events=False)
+            menu[1][1][1][1] = "Bật chỉnh sửa"
+            win['-menu-'].update(menu_definition=menu)
 
         if e == sg.WIN_CLOSED or e == "Thoát":
             break
