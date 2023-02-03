@@ -244,6 +244,8 @@ của vật.''',
     y2 = []
 
     # offset + sampling data
+    # sample1: lọc giá trị khối lượng (m+M)
+    # sample2: lọc giá trị lực (F)
     sample1 = 0.5
     sample2 = 1
     offset = 0.05
@@ -251,6 +253,7 @@ của vật.''',
     # tao cua so chuong trinh
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
+        ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng'], '&Đồ thị', ['Thiết lập...']]],
         ['&Trợ giúp', ['&Thông tin']]
     ]
     tab_table = [
@@ -302,31 +305,20 @@ của vật.''',
         [
             sg.Column([
                 [
-                    # noi dung thi nghiem
-                    sg.Frame("Mô tả thí nghiệm", [
-                        [sg.Multiline(
-                            default_text=exp_temp["desc"],
-                            expand_x=True,
-                            expand_y=True,
-                            background_color='#fff',
-                            sbar_trough_color='#fff',
-                            sbar_background_color='#eeeeee',
-                            sbar_arrow_color='#fff',
-                            sbar_frame_color='#eeeeee'
-                        )]
-                    ], background_color='#eeeeee', title_color="#000", key="-1-"),
-                ],
-                [
                     # hinh anh thi nghiem
                     sg.Frame("Thiết lập thí nghiệm", [
                         [sg.Image(expand_x=True, expand_y=True, key="-img-", background_color='#eeeeee')]
                     ], background_color='#eeeeee', title_color="#000", key="-2-"),
                 ],
+                [
+                    # bảng số liệu
+                    sg.Frame("Bảng số liệu", tab_table, background_color='#eeeeee', title_color="#000", key="-1-"),
+                ],
             ], background_color='#eeeeee'),
             sg.Frame("Kết quả", [
                 [sg.TabGroup([
                     [
-                        sg.Tab('Bảng số liệu', tab_table, background_color='#eeeeee'),
+                        # sg.Tab('Bảng số liệu', tab_table, background_color='#eeeeee'),
                         sg.Tab('Đồ thị 1', tab_plot1, background_color='#eeeeee', key='tab1'),
                         sg.Tab('Đồ thị 2', tab_plot2, background_color='#eeeeee', key='tab2'),
                     ]
@@ -347,6 +339,9 @@ của vật.''',
 
     prev_tab = None
 
+    # its apperance here is because there are a lot of varibales first declared in this condition 
+    # that is in use in this function, so that's why we "can't" move it to the top port of the code
+    # p/s: we could but it super annoying
     def createFig(plotname, plotnum, x, y, figure_cv, ctrl_cv):
         # ve lai do thi 1
         plt.figure(plotnum)
@@ -437,6 +432,42 @@ của vật.''',
             im = im.resize((img_length, img_height), resample=Image.BICUBIC)
             image = ImageTk.PhotoImage(image=im)
             win["-img-"].update(data=image)
+        
+        if e == "Xóa bảng":
+            # reinit the data array
+            data = []
+            # updating the table w/ new data
+            win['-t-'].update(values=data)
+            # these's no need to update the figure as it's already been updated 
+            # everytime we use it
+
+        if e == "Thiết lập...":
+            cfg_layout = [
+                [
+                    sg.Text("Lọc đồ thị 1", background_color='#eeeeee', text_color='#000'), 
+                    sg.In(default_text = str(sample1), background_color='#fff', text_color='#000', border_width=0)
+                ],
+                [
+                    sg.Text("Lọc đồ thị 2", background_color='#eeeeee', text_color='#000'), 
+                    sg.In(default_text = str(sample2), background_color='#fff', text_color='#000', border_width=0)
+                ],
+                [
+                    sg.Push(background_color='#eeeeee'), sg.Text("Sai số", background_color='#eeeeee', text_color='#000'), 
+                    sg.In(default_text = str(offset), background_color='#fff', text_color='#000', border_width=0)
+                ],
+                [sg.Button("Hoàn tất", key="-cfg_done-", button_color=('#fff', '#000'))]
+            ]
+            cfg = sg.Window("Thiết lập đồ thị", cfg_layout, element_justification='left', background_color='#eeeeee', font=("Arial", 10), finalize=True)
+            cfge, cfgv = cfg.read()
+            if cfge == "-cfg_done-":
+                print(cfgv)
+                sample1 = float(cfgv[0])
+                sample2 = float(cfgv[1])
+                offset = float(cfgv[2])
+                cfg.close()
+            else:
+                pass
+
         if e == sg.WIN_CLOSED or e == "Thoát":
             break
         if e == "Xuất đồ thị...":
