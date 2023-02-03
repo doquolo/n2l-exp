@@ -64,7 +64,7 @@ def edit_cell(window, key, row, col, tdata, justify='left'):
             # print out edited data
             print(tdata[row-1])
             # update table
-            window['-t-'].update(values=data)
+            window['-t-'].update(values=data)   
 
         # Destroy the entry widget
         widget.destroy()
@@ -353,7 +353,7 @@ của vật.''',
     sg.set_options(dpi_awareness=True)
     menu = [
         ['&Tệp', ['&Xuất đồ thị...', '&Thoát']],
-        ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng', 'Bật chỉnh sửa'], '&Đồ thị', ['Thiết lập...']]],
+        ['&Số liệu', ['&Bảng số liệu', ['Xóa bảng', 'Xóa dòng', 'Bật chỉnh sửa'], '&Đồ thị', ['Thiết lập...']]],
         ['&Trợ giúp', ['&Thông tin']]
     ]
     tab_table = [
@@ -378,7 +378,7 @@ của vật.''',
             sbar_arrow_color='#fff', 
             sbar_frame_color='#eeeeee', 
             sbar_relief=sg.RELIEF_FLAT,
-            enable_click_events=False
+            enable_click_events=True
         )],
     ]
     tab_plot1 = [
@@ -460,8 +460,8 @@ của vật.''',
         plt.xlabel(exp_temp[plotname]["x_name"])
         plt.ylabel(exp_temp[plotname]["y_name"])
         plt.grid(alpha=0.5)
-        plt.xticks(np.arange(1, 7, 1.0))
-        plt.yticks(np.arange(1, 7, 1.0))
+        # plt.xticks(np.arange(1, 7, 1.0))
+        # plt.yticks(np.arange(1, 7, 1.0))
         draw_figure_w_toolbar(win[figure_cv].TKCanvas, fig, win[ctrl_cv].TKCanvas)
         plt.draw()
 
@@ -491,7 +491,7 @@ của vật.''',
         if isinstance(e, tuple):
             if isinstance(e[2][0], int) and e[2][0] > -1:
                 cell = row, col = e[2]
-            edit_cell(win, '-t-', row+1, col, data, justify='right')
+                edit_cell(win, '-t-', row+1, col, data, justify='right')
 
         # cap nhat do thi
         if prev_tab != v['-4-']:
@@ -549,6 +549,27 @@ của vật.''',
             # these's no need to update the figure as it's already been updated 
             # everytime we use it
 
+        if e == "Xóa dòng":
+            cfg_layout = [
+                [
+                    sg.Text("Dòng: ", background_color='#eeeeee', text_color='#000'), 
+                    sg.In(background_color='#fff', text_color='#000', border_width=0)
+                ],
+                [sg.Button("Hoàn tất", key="-cfg_done-", button_color=('#fff', '#000'), bind_return_key=True)]
+            ]
+            cfg = sg.Window("Xóa", cfg_layout, element_justification='left', background_color='#eeeeee', font=("Arial", 10), finalize=True)
+            cfge, cfgv = cfg.read()
+            if cfge == "-cfg_done-":
+                data.pop(int(cfgv[0])-1)
+                win['-t-'].update(values=data)
+                cfg.close()
+                if (v['-4-'] == 'tab1'):
+                    createFig("plot", 1, x, y, 'fig_cv', 'controls_cv')
+                elif (v['-4-'] == 'tab2'):
+                    createFig("plot2", 2, x2, y2, 'fig_cv2', 'controls_cv2')
+            else:
+                pass
+
         if e == "Thiết lập...":
             cfg_layout = [
                 [
@@ -573,6 +594,10 @@ của vật.''',
                 sample2 = float(cfgv[1])
                 offset = float(cfgv[2])
                 cfg.close()
+                if (v['-4-'] == 'tab1'):
+                    createFig("plot", 1, x, y, 'fig_cv', 'controls_cv')
+                elif (v['-4-'] == 'tab2'):
+                    createFig("plot2", 2, x2, y2, 'fig_cv2', 'controls_cv2')
             else:
                 pass
         
@@ -580,10 +605,12 @@ của vật.''',
         #   win['-t-'].update(enable_click_events=True)
         # TypeError: update() got an unexpected keyword argument 'enable_click_events'
         if e == "Bật chỉnh sửa":
+            sg.Popup("Under developments")
             win['-t-'].update(enable_click_events=True)
             menu[1][1][1][1] = "Tắt chỉnh sửa"
             win['-menu-'].update(menu_definition=menu)
         if e == "Tắt chỉnh sửa":
+            sg.Popup("Under developments")
             win['-t-'].update(enable_click_events=False)
             menu[1][1][1][1] = "Bật chỉnh sửa"
             win['-menu-'].update(menu_definition=menu)
