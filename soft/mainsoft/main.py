@@ -1,5 +1,5 @@
 # TODO: thêm tính năng edit kết quả sau khi đo
-
+# TODO: đồ thị autofocus
 # thu vien gui
 import PySimpleGUI as sg
 # thu vien lay du lieu serial
@@ -358,6 +358,7 @@ của vật.''',
     ]
     tab_table = [
         # bang so lieu
+        # thêm khung/màu so le
         [sg.Table(
             values=data, 
             headings=headings, 
