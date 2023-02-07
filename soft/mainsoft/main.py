@@ -1,5 +1,3 @@
-# TODO: thêm tính năng edit kết quả sau khi đo
-# TODO: đồ thị autofocus
 # thu vien gui
 import PySimpleGUI as sg
 # thu vien lay du lieu serial
@@ -322,6 +320,9 @@ của vật.''',
     ser, ser_desc = portselector()
     print(ser.name, ser_desc)
 
+    # trang thai bang (cho sua hay khong)
+    editState = False
+
     # bien dem so lan thu
     testcount = 0
 
@@ -371,6 +372,8 @@ của vật.''',
             expand_y=True, 
             font=("Arial", 14, "bold"), 
             # header_background_color=(), header_text_color=(),
+            alternating_row_color = "#add8e6",
+            selected_row_colors = ("#000", "#86a8b3"),
             header_relief=sg.RELIEF_SOLID,
             background_color='#fff', 
             text_color='#000',
@@ -464,6 +467,7 @@ của vật.''',
         # plt.xticks(np.arange(1, 7, 1.0))
         # plt.yticks(np.arange(1, 7, 1.0))
         draw_figure_w_toolbar(win[figure_cv].TKCanvas, fig, win[ctrl_cv].TKCanvas)
+        plt.autoscale(True)
         plt.draw()
 
         # ve trendline do thi 1
@@ -490,7 +494,7 @@ của vật.''',
 
         # Checks if the event object is of tuple data type, indicating a click on a cell'
         if isinstance(e, tuple):
-            if isinstance(e[2][0], int) and e[2][0] > -1:
+            if isinstance(e[2][0], int) and e[2][0] > -1 and editState:
                 cell = row, col = e[2]
                 edit_cell(win, '-t-', row+1, col, data, justify='right')
 
@@ -606,14 +610,12 @@ của vật.''',
         #   win['-t-'].update(enable_click_events=True)
         # TypeError: update() got an unexpected keyword argument 'enable_click_events'
         if e == "Bật chỉnh sửa":
-            sg.Popup("Under developments")
-            win['-t-'].update(enable_click_events=True)
-            menu[1][1][1][1] = "Tắt chỉnh sửa"
+            editState = True
+            menu[1][1][1][2] = "Tắt chỉnh sửa"
             win['-menu-'].update(menu_definition=menu)
         if e == "Tắt chỉnh sửa":
-            sg.Popup("Under developments")
-            win['-t-'].update(enable_click_events=False)
-            menu[1][1][1][1] = "Bật chỉnh sửa"
+            editState = False
+            menu[1][1][1][2] = "Bật chỉnh sửa"
             win['-menu-'].update(menu_definition=menu)
 
         if e == sg.WIN_CLOSED or e == "Thoát":
