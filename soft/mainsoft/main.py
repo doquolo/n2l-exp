@@ -10,6 +10,9 @@ from openpyxl.styles import colors
 from openpyxl.cell import Cell
 from openpyxl import Workbook
 from openpyxl.chart import (
+    legend,
+    trendline,
+    marker,
     ScatterChart,
     Reference,
     Series,
@@ -167,49 +170,80 @@ def update_trendline(plt, plotname, x1, y1):
         fontsize=14, verticalalignment='top')
 
 # xuat do thi excel
-def xuatfiledothi(data, dir):
-    # TODO: create two scatter plot for when F is a constant and m+M is a constant
-    # add a trendline with its equation
+def export_to_excel(path, headers, data, fig1_title, fig1_headers, fig1_data, fig2_title, fig2_headers, fig2_data):
+
+    # create a workbook
     wb = Workbook()
     ws = wb.active
 
-    rows = [
-    ]
-    rows.append(headings)
+    # main data
+    rows = []
+    rows.append(headers)
+    for d in data: rows.append(d)
 
-    for d in data: 
-        rows.append(d)
+    # data for creating fig1
+    r1 = []
+    r1.append(fig1_headers)
+    for d in fig1_data: r1.append(d)
 
-    for row in rows:
-        ws.append(row)
+    # data for creating fig2
+    r2 = []
+    r2.append(fig2_headers)
+    for d in fig2_data: r2.append(d)
 
-    print("endpoint: ", endpoint)
+    
+    for r in rows: ws.append(r)
+    ws.append([])
+    for r in r1: ws.append(r)
+    ws.append([])
+    for r in r2: ws.append(r)
+    
+    # create figure 1
+    chart1 = ScatterChart()
+    chart1.title = fig1_title
+    chart1.style = 13
+    chart1.x_axis.title = fig1_headers[0]
+    chart1.y_axis.title = fig1_headers[1]
+    chart1.legend = None
 
-    rowcount = len(rows)
+    x1value = Reference(ws, min_col=2, min_row=(len(rows) + 3), max_row=(len(rows) + 1)+len(r1))
+    y1value = Reference(ws, min_col=1, min_row=(len(rows) + 3), max_row=(len(rows) + 1)+len(r1))
+    series1 = Series(x1value, y1value)
+    series1.marker= marker.Marker('circle')
+    series1.graphicalProperties.line.noFill=True
+    series1.trendline = trendline.Trendline(trendlineType='linear', dispEq=True)
+    chart1.series.append(series1)
 
+    # create figure 2
+    chart2 = ScatterChart()
+    chart2.title = fig2_title
+    chart2.style = 13
+    chart2.x_axis.title = fig2_headers[0]
+    chart2.y_axis.title = fig2_headers[1]
+    chart2.legend = None
+
+    x2value = Reference(ws, min_col=2, min_row=(len(rows) + 2)+len(r1)+2, max_row=(len(rows) + 2)+len(r1)+len(r2))
+    y2value = Reference(ws, min_col=1, min_row=(len(rows) + 2)+len(r1)+2, max_row=(len(rows) + 2)+len(r1)+len(r2))
+    series2 = Series(x2value, y2value)
+    series2.marker= marker.Marker('circle')
+    series2.graphicalProperties.line.noFill=True
+    series2.trendline = trendline.Trendline(trendlineType='linear', dispEq=True)
+    chart2.series.append(series2)
+
+    ws.add_chart(chart1, "I1")
+    ws.add_chart(chart2, "I18")
+
+    # tô màu
     for cell in ws["1:1"]:
         cell.fill = PatternFill(start_color='35b1de', end_color='35b1de', fill_type='solid')
         cell.font = Font(bold=True)
+    
+    for i in range(1, len(rows)):
+        for cell in ws[f"{i+1}:{i+1}"]:
+            cell.fill = PatternFill(start_color='c6efce', end_color='c6efce', fill_type='solid')
+            cell.font = Font(bold=False)
 
-    for rows in ws.iter_rows(min_row=2, min_col=1, max_col=6, max_row=len(rows)):
-        for cell in rows:
-            cell.fill = PatternFill(start_color='35de8c', end_color='35de8c', fill_type='solid')
-
-    chart = ScatterChart()
-    chart.title = "Đồ thị F-a"
-    chart.style = 13
-    chart.x_axis.title = "Lực kéo F (N)"
-    chart.y_axis.title = "Gia tốc a (m/s)"
-    chart.legend = None
-
-    xvalues = Reference(ws, min_col=6, min_row=2, max_row=rowcount)
-    yvalues = Reference(ws, min_col=2, min_row=2, max_row=rowcount)
-    series = Series(xvalues, yvalues, title="")
-    chart.series.append(series)
-
-    ws.add_chart(chart, "I1")
-
-    wb.save(dir)
+    wb.save(path)
 
 # trinh chon cong com
 def portselector():
@@ -309,11 +343,13 @@ của vật.''',
             "name": "Đồ thị m+M (const)",
             "x_name": "F (N)",
             "y_name": "a (m/s)",
+            "headers": ["Lực kéo (F)", "Gia tốc (m/s)"]
         },
         "plot2": {
             "name": "Đồ thị F (const)",
             "x_name": "1/(m+M) (kg)",
             "y_name": "a (m/s)",
+            "headers": ["1/m+M (kg)", "Gia tốc (m/s)"],
         },
     }
     # init serial port
@@ -642,7 +678,13 @@ của vật.''',
                 elif event == "Submit":
                     dir = values["-IN2-"]
                     dir = dir + f"/{name}"
-                    xuatfiledothi(data, dir)
+                    fig1_data = []
+                    for i in range(len(x)):
+                        fig1_data.append([x[i], y[i]])
+                    fig2_data = []
+                    for i in range(len(x2)):
+                        fig2_data.append([x2[i], y2[i]])
+                    export_to_excel(dir, exp_temp["table_data"]["headers"], data, exp_temp["plot"]["name"], exp_temp["plot"]["headers"], fig1_data, exp_temp["plot2"]["name"], exp_temp["plot2"]["headers"], fig2_data)
                     sg.Popup(f"Đã xuất {name} tại đường dẫn {dir}.", title="Hoàn tất", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
                     break
             exp_win.close()
