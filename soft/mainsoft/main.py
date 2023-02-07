@@ -314,7 +314,7 @@ của vật.''',
         },
         "plot2": {
             "name": "Đồ thị F (const)",
-            "x_name": "m+M (kg)",
+            "x_name": "1/(m+M) (kg)",
             "y_name": "a (m/s)",
         },
     }
