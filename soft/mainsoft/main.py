@@ -251,20 +251,19 @@ def portselector():
     ports = serial.tools.list_ports.comports()
     ports = sorted(ports)
 
-    portlist = ""
+    portlist = []
     for i in range(len(ports)):
         port = ports[i].name
         desc = ports[i].description
         hwid = ports[i].hwid
-        portlist += "{}. {}: {} [{}] \n".format(i+1, port, desc, hwid)
+        portlist.append("{}. {}: {} [{}] \n".format(i+1, port, desc, hwid))
         # print("{}: {} [{}]".format(port, desc, hwid))
 
     # print(portlist)
 
     layout = [
         [sg.Text("Chọn cổng COM đến ESP32: ", background_color='#eeeeee', text_color='#000')],
-        [sg.Text(portlist.strip(), background_color='#eeeeee', text_color='#000')], 
-        [sg.InputText(background_color='#fff', text_color='#000', border_width=0)], 
+        [sg.Combo(values=portlist, expand_x=True, background_color='#eeeeee', text_color='#000', button_background_color='#eeeeee', button_arrow_color="#000")],
         [sg.Submit(button_text="Kết nối", button_color=('#fff', '#000'))]
     ]
     win = sg.Window("Chọn cổng COM", layout, finalize=True, background_color='#eeeeee', font=("Arial", 10))
@@ -273,8 +272,9 @@ def portselector():
 
     # chon cong com den esp32
     # i = int(input("Chọn cổng COM để kết nối đến ESP32: "))
-    ser = serial.Serial(str(ports[int(v[0])-1].name), 9600, timeout=0.050)
-    return ser, str(ports[int(v[0])-1].description)
+    port = ports[portlist.index(v[0])]
+    ser = serial.Serial(str(port.name), 9600, timeout=0.050)
+    return ser, str(port.description)
 
 # ham su li du lieu vao tu thiet bi do
 def datain(ser, testcount, data):
@@ -284,22 +284,23 @@ def datain(ser, testcount, data):
     print(sout_decoded)
     try:
         print(testcount, ". ", sout_decoded[2], "(ms)")
-        testcount += 1
         while True:
             # tạo input box trống -> đặt key -> update nội dung theo key
             # dùng hàm ngoài để parse công thức
             layout = [
-                [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount}:",  background_color='#eeeeee', text_color='#000')],
+                [sg.Text(f"Nhập dữ liệu còn thiếu của lần đo thứ {testcount+1}:",  background_color='#eeeeee', text_color='#000')],
                 [sg.Text(f"Dữ liệu thời gian từ bộ đo: {sout_decoded[2]}(ms)",  background_color='#eeeeee', text_color='#000')],
                 [sg.Text("Lực kéo (Lý thuyết): ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
                 [sg.Text("Khối lượng:             ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
                 [sg.Text("Quãng đường:         ",  background_color='#eeeeee', text_color='#000'), sg.InputText( background_color='#fff', text_color='#000', border_width=0)],
-                [sg.Submit(button_text="Hoàn tất",  button_color=('#fff', '#000'))]
+                [sg.Submit(button_text="Hoàn tất",  button_color=('#fff', '#000'), bind_return_key=True)]
             ]
             win = sg.Window("Nhập dữ liệu đo", layout, finalize=True, background_color='#eeeeee', font=('Arial', 14), keep_on_top=True)
             e, v = win.read()
             win.close()
-            if (v[0] != "" and v[1] != "" and v[2] != ""): break
+            if (v[0] != "" and v[1] != "" and v[2] != ""): 
+                testcount += 1
+                break
             else: sg.Popup("Các ô dữ liệu không được để trống!", title="Chú ý", background_color='#eeeeee', text_color='#000', button_color=('#fff', '#000'))
         time = float(sout_decoded[2]) / 1000 #ms to s
         acceleration = round(((float(v[2])*2)/(time*time)), 2)
@@ -585,6 +586,8 @@ của vật.''',
         if e == "Xóa bảng":
             # reinit the data array
             data = []
+            # reninit counter
+            testcount = 0
             # updating the table w/ new data
             win['-t-'].update(values=data)
             # these's no need to update the figure as it's already been updated 
@@ -625,7 +628,7 @@ của vật.''',
                     sg.Push(background_color='#eeeeee'), sg.Text("Sai số", background_color='#eeeeee', text_color='#000'), 
                     sg.In(default_text = str(offset), background_color='#fff', text_color='#000', border_width=0)
                 ],
-                [sg.Button("Hoàn tất", key="-cfg_done-", button_color=('#fff', '#000'))]
+                [sg.Button("Hoàn tất", key="-cfg_done-", button_color=('#fff', '#000'), bind_return_key=True)]
             ]
             cfg = sg.Window("Thiết lập đồ thị", cfg_layout, element_justification='left', background_color='#eeeeee', font=("Arial", 10), finalize=True)
             cfge, cfgv = cfg.read()
@@ -642,9 +645,6 @@ của vật.''',
             else:
                 pass
         
-        # TODO: where tf is this error come from
-        #   win['-t-'].update(enable_click_events=True)
-        # TypeError: update() got an unexpected keyword argument 'enable_click_events'
         if e == "Bật chỉnh sửa":
             editState = True
             menu[1][1][1][2] = "Tắt chỉnh sửa"
