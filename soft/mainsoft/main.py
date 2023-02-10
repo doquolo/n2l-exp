@@ -356,8 +356,7 @@ if __name__ == "__main__":
 
     # du lieu cua bang
     # for testing purposes - removed in release
-    data = [[1, 1.0, 0.3, 0.55, 0.5, 3.31], [2, 1.0, 0.4, 0.64, 0.5, 2.44], [3, 1.0, 0.5, 0.71, 0.5, 1.98], [4, 2.0, 0.5, 0.5, 0.5, 4.0], [5, 3.0, 0.5, 0.42, 0.5, 5.67]]
-    # data = []
+    data = []
     headings = exp_temp["table_data"]["headers"]
 
     # du lieu de ve do thi 1 (x: luc keo - y: gia toc)
