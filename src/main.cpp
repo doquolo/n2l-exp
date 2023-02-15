@@ -89,8 +89,8 @@ int t_timer() {
   printlcd(0, 0, "Bat dau do (T)", true);
   while (true) {
     b1btn.loop();
-    stopbtn.loop();
-    if (stopbtn.isPressed()) break;
+    startbtn.loop();
+    if (startbtn.isReleased()) break;
     else if (b1btn.isPressed()) return 0;
   }
   // lay thoi gian ket thuc theo ms

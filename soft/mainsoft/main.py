@@ -164,7 +164,7 @@ def update_trendline(plt, plotname, x1, y1):
     
     plt.figure(plotname)
 
-    plt.plot(x1, p(x1), "r--")
+    plt.plot(x1, p(x1), "r--", dashes=(None, None))
     text = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$"
     plt.gca().text(0.05, 0.95, text,transform=plt.gca().transAxes,
         fontsize=14, verticalalignment='top')

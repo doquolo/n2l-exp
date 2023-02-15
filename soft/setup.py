@@ -12,7 +12,7 @@ if sys.platform == "win32":
 
 setup(
     name="dodac",
-    version="0.1",
+    version="0.2",
     description="Do dac va thong ke so lieu",
     options={"build_exe": build_exe_options},
     executables=[Executable("main.py", base=base)],
