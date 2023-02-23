@@ -113,7 +113,7 @@ int a_b_timer() {
       Serial.print("0;"); 
       Serial.print(data1.load()); Serial.print(";");
       Serial.print(data2.load()); Serial.print(";");
-      Serial.print("a&b;");
+      Serial.println("a&b;");
       break;
     }
   }
