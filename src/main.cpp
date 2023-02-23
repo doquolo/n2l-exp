@@ -1,8 +1,14 @@
 #include <Arduino.h>
-#include <ezButton.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#ifdef __cplusplus
+#include <atomic>
+#include <ezButton.h>
+using namespace std;
+#else
+#include <stdatomic.h>
+#endif
 
 LiquidCrystal_I2C lcd(0x27,20,4);
 
@@ -19,6 +25,54 @@ ezButton startbtn(start);
 ezButton stopbtn(stop);
 ezButton b1btn(b1);
 
+// che do do dong thoi a va b - dl 3 newton
+// pointer den tien trinh chay khong dong bo
+TaskHandle_t t1;
+TaskHandle_t t2;
+// bien dung thu vien atomic dung de cap nhat thong
+// tin trong tien trinh khac tien trinh main loop
+atomic<int> data1; 
+atomic<int> data2; 
+
+// ham do thoi gian vat chan cong
+void tracker1(void * pvParameters) {
+  long long int start, stop;
+  while (true) {
+    startbtn.loop();
+    if (startbtn.isPressed()) {
+      start = millis();
+      while (true){
+        startbtn.loop();
+        if (startbtn.isReleased()) break;
+      }
+      stop = millis();
+      break;
+    }
+  }
+  long long int diff = stop - start;
+  data1.store(diff);
+  vTaskDelete(NULL);
+}
+
+void tracker2(void * pvParameters) {
+  long long int start, stop;
+  while (true) {
+    stopbtn.loop();
+    if (stopbtn.isPressed()) {
+      start = millis();
+      while (true){
+        stopbtn.loop();
+        if (stopbtn.isReleased()) break;
+      }
+      stop = millis();
+      break;
+    }
+  }
+  long long int diff = stop - start;
+  data2.store(diff);
+  vTaskDelete(NULL);
+}
+
 // ham in ki tu ra lcd
 void printlcd(int row, int col, String string, bool clear = false) {
     if (clear) lcd.clear();
@@ -32,14 +86,47 @@ void initHome(bool isClear = false) {
   printlcd(2, 0, "Che do hien tai: ", false);
     switch (mode) {
       case 0:
-        printlcd(3, 0, "A->B", false);
+        printlcd(3, 0, "A->B ", false);
         break;
       case 1:  
-        printlcd(3, 0, "T   ", false);
+        printlcd(3, 0, "A & B", false);
+        break;
+      case 2:  
+        printlcd(3, 0, "T    ", false);
         break;
       default:
         break;
     }
+}
+
+int a_b_timer() {
+  printlcd(0, 0, "Bat dau nhan lenh!", true);
+  printlcd(1, 0, "(A & B)", false);
+  xTaskCreatePinnedToCore(tracker1, "t1", 10000, NULL, 1, &t1, 0);
+  xTaskCreatePinnedToCore(tracker2, "t2", 10000, NULL, 1, &t2, 1);
+  long long int prev1 = data1.load(), prev2 = data2.load();
+  while (true) {
+    if ((prev1 != data1.load()) && (prev2 != data2.load())) {
+      printlcd(0, 0, "Ket thuc do!", true);
+      printlcd(1, 0, "t1: "); printlcd(1, 4, String(data1.load()));
+      printlcd(2, 0, "t2: "); printlcd(2, 4, String(data2.load()));
+      Serial.print("0;"); 
+      Serial.print(data1.load()); Serial.print(";");
+      Serial.print(data2.load()); Serial.print(";");
+      Serial.print("a&b;");
+      break;
+    }
+  }
+  // delay xem kq
+  while (true) {
+    b1btn.loop();
+    if (b1btn.isPressed()) {
+      delay(250);
+      break;
+    }
+  }
+  initHome(true);
+  return 1;
 }
 
 // do thoi gian di tu a->b
@@ -138,7 +225,7 @@ void loop() {
   startbtn.loop();
   b1btn.loop();
   if (b1btn.isPressed()) {
-    mode = !(mode);
+    mode = (mode + 1 == 3) ? 0 : mode+1;
     delay(250);
     // in ra man hinh che do hien tai
     initHome();
@@ -150,11 +237,14 @@ void loop() {
         ab_timer();
         break;
       case 1:
+        a_b_timer();
+        break;
+      case 2:
         t_timer();
         break;
       default:
         break;
     }
   }
-  // delay(10); // this speeds up the simulation
+  delay(10); // this speeds up the simulation
 }

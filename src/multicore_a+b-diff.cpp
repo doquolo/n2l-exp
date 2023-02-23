@@ -23,7 +23,7 @@ void setup() {
   delay(500);
 }
 
-void func1(void * pvParameters) {
+void tracker1(void * pvParameters) {
   long long int start, stop;
   while (true) {
     b1.loop();
@@ -46,7 +46,7 @@ void func1(void * pvParameters) {
   vTaskDelete(NULL);
 }
 
-void func2(void * pvParameters) {
+void tracker2(void * pvParameters) {
   long long int start, stop;
   while (true) {
     b2.loop();
@@ -73,8 +73,8 @@ void loop() {
   bstart.loop();
   if (bstart.isPressed()) {
     Serial.println("Measuring started!");
-    xTaskCreatePinnedToCore(func1, "t1", 10000, NULL, 1, &t1, 0);
-    xTaskCreatePinnedToCore(func2, "t2", 10000, NULL, 1, &t2, 1);
+    xTaskCreatePinnedToCore(tracker1, "t1", 10000, NULL, 1, &t1, 0);
+    xTaskCreatePinnedToCore(tracker2, "t2", 10000, NULL, 1, &t2, 1);
     long long int prev1 = data1.load(), prev2 = data2.load();
     while (true) {
       if ((prev1 != data1.load()) && (prev2 != data2.load())) {
