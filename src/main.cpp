@@ -18,12 +18,13 @@ byte customChar[] = {B00000,B00000,B00100,B01110,B11111,B11111,B11111,B00000};
 // khai bao bien chua che do do
 int mode = 0;
 // khai bao chan cua sensor
-const int start = 18; const int stop = 19; const int b1 = 23;
+const int start = 18; const int stop = 19; const int b1 = 23; const int d_start = 5;
 int startstate; int stopstate; int b1state;
 // tao instance cho sensor
 ezButton startbtn(start);
 ezButton stopbtn(stop);
 ezButton b1btn(b1);
+ezButton d_startbtn(d_start);
 
 // che do do dong thoi a va b - dl 3 newton
 // pointer den tien trinh chay khong dong bo
@@ -224,6 +225,7 @@ void loop() {
   // loop
   startbtn.loop();
   b1btn.loop();
+  d_startbtn.loop();
   if (b1btn.isPressed()) {
     mode = (mode + 1 == 3) ? 0 : mode+1;
     delay(250);
@@ -236,15 +238,12 @@ void loop() {
       case 0:
         ab_timer();
         break;
-      case 1:
-        a_b_timer();
-        break;
       case 2:
         t_timer();
         break;
       default:
         break;
     }
-  }
+  } else if (d_startbtn.isPressed() && mode == 1) a_b_timer();
   delay(10); // this speeds up the simulation
 }
