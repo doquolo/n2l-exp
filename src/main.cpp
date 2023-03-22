@@ -101,6 +101,7 @@ void initHome(bool isClear = false) {
 }
 
 int a_b_timer() {
+  Serial.println("b");
   printlcd(0, 0, "Bat dau nhan lenh!", true);
   printlcd(1, 0, "(A & B)", false);
   xTaskCreatePinnedToCore(tracker1, "t1", 10000, NULL, 1, &t1, 0);
@@ -127,6 +128,7 @@ int a_b_timer() {
     }
   }
   initHome(true);
+  Serial.print("r");
   return 1;
 }
 
@@ -219,6 +221,7 @@ void setup() {
   printlcd(0, 0, "Cho tin hieu diem 1!", true);
   printlcd(2, 0, "Che do hien tai: ", false);
   printlcd(3, 0, "A->B", false);
+  Serial.println("r");
 }
 
 void loop() {
@@ -244,6 +247,13 @@ void loop() {
       default:
         break;
     }
-  } else if (d_startbtn.isPressed() && mode == 1) a_b_timer();
+  }
+  if (Serial.available() > 0) {
+    String str = Serial.readString();
+    str.trim();
+    if (str == "s-ab" && mode == 1) {
+      a_b_timer();
+    }
+  }
   delay(10); // this speeds up the simulation
 }
